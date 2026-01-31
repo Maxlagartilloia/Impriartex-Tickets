@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instituciones | Impriartex</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; }
+        .main { flex: 1; padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: flex-end; }
+        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
+        .btn-add { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 12px; background: #f8fafc; color: #64748b; font-size: 12px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .btn-del { color: #ef4444; cursor: pointer; border: none; background: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="card">
+            <h3 style="margin-top:0;">🏢 Registrar Nueva Institución</h3>
+            <form id="instForm" class="form-inline">
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:700; margin-bottom:5px;">NOMBRE DE LA ENTIDAD</label>
+                    <input type="text" id="instName" placeholder="Ej: Municipio Shushufindi" required>
+                </div>
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:700; margin-bottom:5px;">DIRECCIÓN</label>
+                    <input type="text" id="instAddress" placeholder="Calle Principal s/n">
+                </div>
+                <div>
+                    <label style="display:block; font-size:12px; font-weight:700; margin-bottom:5px;">TÉCNICO ASIGNADO</label>
+                    <select id="techSelect" required>
+                        <option value="">Cargando técnicos...</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-add">Guardar Institución</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0;">Directorio de Clientes</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Ubicación</th>
+                        <th>Técnico Responsable</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="instTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/security.js"></script>
+    <script src="js/institutions.js"></script>
+</body>
+</html>
