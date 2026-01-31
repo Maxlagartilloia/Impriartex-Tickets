@@ -52,15 +52,15 @@ document.getElementById('techForm').addEventListener('submit', async (e) => {
     // Primero, creamos el perfil con un ID generado aleatoriamente para esta prueba.
     // (En un sistema SaaS real, aquí se dispara una invitación por correo)
     
-    const { error } = await sb.from('profiles').insert([
-        { 
-            id: crypto.randomUUID(), // Generamos un ID único para evitar el error de NULL
-            full_name: name, 
-            email: email, 
-            role: 'technician' 
-        }
-    ]);
-
+   // Reemplaza la parte del "insert" en tu js/technicians.js
+const { error } = await sb.from('profiles').insert([
+    { 
+        id: crypto.randomUUID(), // Genera un ID nuevo y único
+        full_name: name, 
+        email: email, 
+        role: 'technician' 
+    }
+]);
     if (error) {
         alert("Error al registrar: " + error.message);
     } else {
