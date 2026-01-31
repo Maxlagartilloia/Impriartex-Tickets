@@ -52,41 +52,27 @@ async function loadTechnicians() {
 }
 
 async function loadInstitutions() {
-    const { data: insts, error } = await sb
+    const { data: insts } = await sb
         .from('institutions')
-        .select(`
-            *,
-            technician:profiles!institutions_technician_id_fkey(full_name)
-        `)
+        .select('*, technician:profiles!technician_id(full_name)')
         .order('name');
 
     const tbody = document.getElementById('instTable');
-    
-    if (insts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No hay clientes registrados.</td></tr>';
-        return;
-    }
-
     tbody.innerHTML = insts.map(i => `
         <tr>
             <td>
-                <strong>${i.name}</strong><br>
-                <small style="color:#64748b;"><i class="fas fa-user"></i> ${i.contact_name || 'Sin contacto'}</small>
+                <div style="font-weight: 700; color: #1e293b;">${i.name}</div>
+                <div style="font-family: monospace; font-size: 10px; color: #94a3b8;">ID: ${i.id.substring(0,8)}...</div>
             </td>
             <td>
-                ${i.address || '---'}<br>
-                <small style="color:#10b981;"><i class="fas fa-phone"></i> ${i.contact_phone || '---'}</small>
+                <div style="font-size: 13px;"><i class="fas fa-map-marker-alt" style="color:#94a3b8;"></i> ${i.address || '---'}</div>
+                <div style="font-size: 13px; color: #3b82f6;"><i class="fas fa-user-tie"></i> ${i.contact_name || '---'} | ${i.contact_phone || ''}</div>
             </td>
             <td>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <i class="fas fa-user-check" style="color:var(--accent);"></i>
-                    <span>${i.technician?.full_name || 'PENDIENTE'}</span>
-                </div>
+                <span style="font-weight: 600; color: #475569;"><i class="fas fa-user-check" style="color:#10b981;"></i> ${i.technician?.full_name || 'PENDIENTE'}</span>
             </td>
-            <td style="text-align:right;">
-                <button onclick="deleteInst('${i.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
+            <td>
+                <button onclick="deleteInst('${i.id}')" style="border:none; background:none; color:#cbd5e1; cursor:pointer;"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `).join('');
