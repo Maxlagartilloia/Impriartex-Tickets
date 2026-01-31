@@ -105,12 +105,60 @@ document.getElementById('formAttend').addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// 5. SECCIÓN REPORTES: GENERAR PDF
+// 5. SECCIÓN REPORTES: GENERAR PDF PREMIUM
 // ==========================================
 window.downloadPDF = async (ticketId) => {
-    // Aquí pegaremos la función que inyecta datos en el HTML oculto y guarda el PDF
-    alert("Generando PDF para el ticket: " + ticketId);
-};
+    console.log("🖨️ Iniciando generación de PDF para:", ticketId);
 
-// Utilidad
-window.closeModals = () => document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+    // 1. Obtener datos completos del Ticket con sus relaciones
+    const { data: t, error } = await sb
+        .from('tickets')
+        .select(`
+            *,
+            equipment (*),
+            institutions (*),
+            technician:profiles!technician_id(full_name)
+        `)
+        .eq('id', ticketId)
+        .single();
+
+    if (error) {
+        alert("Error al recuperar datos para el PDF: " + error.message);
+        return;
+    }
+
+    // 2. Llenar la plantilla HTML oculta (La que pusimos en tickets.html)
+    document.getElementById('pdf-ticket-num').innerText = "#" + t.ticket_number;
+    document.getElementById('pdf-date').innerText = new Date(t.created_at).toLocaleDateString();
+    document.getElementById('pdf-inst').innerText = t.institutions?.name || 'S/N';
+    document.getElementById('pdf-equip').innerText = `${t.equipment?.brand || ''} ${t.equipment?.model || ''}`;
+    document.getElementById('pdf-serial-print').innerText = t.equipment?.serial || 'S/N';
+    document.getElementById('pdf-loc').innerText = `${t.equipment?.physical_location || ''} - ${t.equipment?.location_details || ''}`;
+    document.getElementById('pdf-tech').innerText = t.technician?.full_name || 'Técnico Asignado';
+    document.getElementById('pdf-desc').innerText = t.description || '';
+    document.getElementById('pdf-solution').innerText = `DIAGNÓSTICO: ${t.diagnosis || 'N/A'}\n\nSOLUCIÓN: ${t.solution || 'N/A'}`;
+    document.getElementById('pdf-bw').innerText = t.equipment?.counter_bw || 0;
+    document.getElementById('pdf-col').innerText = t.equipment?.counter_color || 0;
+
+    // 3. Configuración del motor html2pdf
+    const element = document.getElementById('pdf-content');
+    const opt = {
+        margin:       0,
+        filename:     `Reporte_Impriartex_T${t.ticket_number}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // 4. Ejecutar conversión y descarga
+    const container = document.getElementById('pdf-template-container');
+    container.style.display = 'block'; // Mostrar temporalmente para captura
+
+    html2pdf().set(opt).from(element).save().then(() => {
+        container.style.display = 'none'; // Volver a ocultar
+        console.log("✅ PDF generado con éxito");
+    }).catch(err => {
+        console.error("Error html2pdf:", err);
+        container.style.display = 'none';
+    });
+};
