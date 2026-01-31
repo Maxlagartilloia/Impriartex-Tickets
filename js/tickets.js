@@ -1,174 +1,178 @@
-// js/tickets.js - SISTEMA INTEGRADO V8.0
+// js/tickets.js - SISTEMA INTEGRADO V9.0 (VERSIÓN COMPLETA)
 
 let userProfile = null;
 
 // ==========================================
-// 1. INICIALIZACIÓN
+// 1. INICIALIZACIÓN Y SEGURIDAD
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await sb.auth.getUser();
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // Obtenemos el perfil completo del usuario logueado
     const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
     userProfile = profile;
 
-    // Mostrar botón solo a clientes
-    if(profile.role === 'client') document.getElementById('btnNewTicket').style.display = 'block';
+    // Solo los clientes ven el botón de "Crear Ticket"
+    const btnNew = document.getElementById('btnNewTicket');
+    if(btnNew) {
+        btnNew.style.display = profile.role === 'client' ? 'block' : 'none';
+    }
 
     loadTickets();
 });
 
 // ==========================================
-// 2. LÓGICA DE CARGA Y RENDER (TABLA/GRID)
+// 2. CARGA DE DATOS Y KPIs
 // ==========================================
 async function loadTickets() {
-    let query = sb.from('tickets').select('*, equipment(model, serial), institutions(name)');
+    // Consulta relacional completa para traer nombres de instituciones y técnicos
+    let query = sb.from('tickets').select(`
+        *,
+        equipment(model, serial, brand, counter_bw, counter_color, physical_location, location_details),
+        institutions(name, address),
+        technician:profiles!technician_id(full_name)
+    `);
     
-    if(userProfile.role === 'client') query = query.eq('institution_id', userProfile.institution_id);
-    if(userProfile.role === 'technician') query = query.eq('technician_id', userProfile.id);
+    // Filtros de privacidad por Rol
+    if(userProfile.role === 'client') {
+        query = query.eq('institution_id', userProfile.institution_id);
+    } else if(userProfile.role === 'technician') {
+        query = query.eq('technician_id', userProfile.id);
+    }
+    // El Supervisor (Alex) ve todos los tickets por defecto
 
-    const { data: tickets } = await query.order('created_at', { ascending: false });
+    const { data: tickets, error } = await query.order('created_at', { ascending: false });
+    
+    if (error) {
+        console.error("Error cargando tickets:", error);
+        return;
+    }
+
+    updateKPIs(tickets);
     renderTickets(tickets);
 }
 
+function updateKPIs(tickets) {
+    const open = tickets.filter(t => t.status === 'open').length;
+    const process = tickets.filter(t => t.status === 'progress').length;
+    const closed = tickets.filter(t => t.status === 'closed').length;
+
+    if(document.getElementById('count-open')) document.getElementById('count-open').innerText = open;
+    if(document.getElementById('count-process')) document.getElementById('count-process').innerText = process;
+    if(document.getElementById('count-closed')) document.getElementById('count-closed').innerText = closed;
+}
+
+// ==========================================
+// 3. RENDERIZADO DE LA INTERFAZ
+// ==========================================
 function renderTickets(tickets) {
-    const grid = document.getElementById('ticketsGrid');
-    grid.innerHTML = tickets.map(t => {
+    const tbody = document.getElementById('ticketTable');
+    if (!tbody) return;
+
+    tbody.innerHTML = tickets.map(t => {
         let btnAccion = '';
         
-        // Si el ticket está abierto y soy técnico -> Botón ATENDER
-        if(userProfile.role === 'technician' && t.status !== 'closed') {
-            btnAccion = `<button onclick="openAttendModal('${t.id}', '${t.equipment_id}', '${t.equipment?.model}')" style="background:var(--accent); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; width:100%; margin-top:10px;">Atender Servicio</button>`;
-        }
-        
-        // Si el ticket está cerrado -> Botón PDF (Disponible para todos)
+        // Lógica de botones según estado y rol
         if(t.status === 'closed') {
-            btnAccion = `<button onclick="downloadPDF('${t.id}')" style="background:var(--closed); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; width:100%; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                <i class="fas fa-file-pdf"></i> Descargar Reporte
-            </button>`;
+            btnAccion = `<button onclick="downloadPDF('${t.id}')" class="btn-primary" style="background:#475569;"><i class="fas fa-file-pdf"></i> Reporte</button>`;
+        } else if (userProfile.role !== 'client') {
+            btnAccion = `<button onclick="openAttendModal('${t.id}', '${t.equipment_id}', '${t.equipment?.model}')" class="btn-primary">Atender</button>`;
+        } else {
+            btnAccion = `<span style="color:#94a3b8; font-size:12px;">En espera</span>`;
         }
-
-        const statusLabel = t.status === 'open' ? 'Abierto' : (t.status === 'progress' ? 'En Proceso' : 'Finalizado');
 
         return `
-            <div class="ticket-card" style="border-top-color: ${t.status === 'closed' ? 'var(--closed)' : 'var(--open)'}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="font-size:11px; font-weight:bold; color:#94a3b8;">#${t.ticket_number}</span>
-                    <span style="font-size:10px; font-weight:800; text-transform:uppercase; color:${t.status === 'closed' ? 'var(--closed)' : 'var(--open)'}">${statusLabel}</span>
-                </div>
-                <h4 style="margin:0 0 10px 0;">${t.equipment?.model || 'Equipo desconocido'}</h4>
-                <p style="font-size:13px; color:#475569; margin-bottom:15px;">${t.description}</p>
-                <div style="border-top:1px solid #f1f5f9; padding-top:10px;">
-                    ${btnAccion}
-                </div>
-            </div>
+            <tr>
+                <td>
+                    <div style="font-weight:700;">#${t.ticket_number || '---'}</div>
+                    <div style="font-size:12px; color:#64748b;">${new Date(t.created_at).toLocaleDateString()}</div>
+                </td>
+                <td>
+                    <div style="font-weight:600;">${t.institutions?.name || 'Cliente'}</div>
+                    <div style="font-size:12px; color:#3b82f6;">${t.equipment?.model || 'Equipo'} - ${t.equipment?.serial || ''}</div>
+                </td>
+                <td>
+                    <div style="font-size:13px; color:#ef4444; font-weight:600;">${t.description}</div>
+                </td>
+                <td>
+                    <span style="padding:4px 10px; border-radius:6px; font-size:11px; font-weight:800; text-transform:uppercase; 
+                    background:${t.status === 'closed' ? '#dcfce7' : '#fee2e2'}; 
+                    color:${t.status === 'closed' ? '#166534' : '#991b1b'};">
+                        ${t.status === 'open' ? 'Abierto' : (t.status === 'progress' ? 'En Proceso' : 'Finalizado')}
+                    </span>
+                </td>
+                <td style="text-align:right;">${btnAccion}</td>
+            </tr>
         `;
     }).join('');
 }
 
 // ==========================================
-// 3. SECCIÓN CLIENTE: CREAR TICKETS
-// ==========================================
-window.openCreateModal = async () => {
-    const { data: equips } = await sb.from('equipment').select('id, model, serial').eq('institution_id', userProfile.institution_id);
-    document.getElementById('selectEquip').innerHTML = equips.map(e => `<option value="${e.id}">${e.model}</option>`).join('');
-    document.getElementById('modalCreate').style.display = 'flex';
-};
-
-document.getElementById('formTicket').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const { data: inst } = await sb.from('institutions').select('technician_id').eq('id', userProfile.institution_id).single();
-    const newTicket = {
-        institution_id: userProfile.institution_id,
-        equipment_id: document.getElementById('selectEquip').value,
-        client_id: userProfile.id,
-        technician_id: inst.technician_id,
-        description: document.getElementById('txtDesc').value,
-        status: 'open'
-    };
-    await sb.from('tickets').insert([newTicket]);
-    location.reload();
-});
-
-// ==========================================
-// 4. SECCIÓN TÉCNICO: ATENDER TICKETS
+// 4. GESTIÓN DE SERVICIO (MODALES)
 // ==========================================
 window.openAttendModal = (tId, eId, model) => {
-    document.getElementById('attendTicketId').value = tId;
-    document.getElementById('attendEquipId').value = eId;
-    document.getElementById('modalAttend').style.display = 'flex';
+    // Estas funciones deben estar conectadas a los IDs de los inputs en tu modal de tickets.html
+    const modal = document.getElementById('modalAttend');
+    if(modal) {
+        document.getElementById('attendTicketId').value = tId;
+        document.getElementById('attendEquipId').value = eId;
+        modal.style.display = 'flex';
+    }
 };
 
-document.getElementById('formAttend').addEventListener('submit', async (e) => {
-    e.preventDefault();
+// Cierre de ticket por parte del Técnico
+async function finalizarServicio(e) {
     const tId = document.getElementById('attendTicketId').value;
     const eId = document.getElementById('attendEquipId').value;
     
-    await sb.from('tickets').update({ 
-        diagnosis: document.getElementById('txtDiagnosis').value, 
+    const { error: tErr } = await sb.from('tickets').update({ 
+        diagnosis: document.getElementById('txtDiagnosis').value,
+        solution: document.getElementById('txtSolution').value,
         status: 'closed' 
     }).eq('id', tId);
     
-    await sb.from('equipment').update({ 
-        counter_bw: parseInt(document.getElementById('cntBW').value) 
+    const { error: eErr } = await sb.from('equipment').update({ 
+        counter_bw: parseInt(document.getElementById('cntBW').value),
+        counter_color: parseInt(document.getElementById('cntColor').value)
     }).eq('id', eId);
 
-    location.reload();
-});
+    if(!tErr && !eErr) {
+        alert("✅ Servicio finalizado y reporte generado.");
+        location.reload();
+    }
+}
 
 // ==========================================
-// 5. SECCIÓN REPORTES: GENERAR PDF PREMIUM
+// 5. GENERACIÓN DE REPORTES PDF
 // ==========================================
 window.downloadPDF = async (ticketId) => {
-    console.log("🖨️ Iniciando generación de PDF para:", ticketId);
+    const { data: t } = await sb.from('tickets').select(`
+        *,
+        equipment (*),
+        institutions (*),
+        technician:profiles!technician_id(full_name)
+    `).eq('id', ticketId).single();
 
-    // 1. Obtener datos completos del Ticket con sus relaciones
-    const { data: t, error } = await sb
-        .from('tickets')
-        .select(`
-            *,
-            equipment (*),
-            institutions (*),
-            technician:profiles!technician_id(full_name)
-        `)
-        .eq('id', ticketId)
-        .single();
-
-    if (error) {
-        alert("Error al recuperar datos para el PDF: " + error.message);
-        return;
-    }
-
-    // 2. Llenar la plantilla HTML oculta (La que pusimos en tickets.html)
+    // Mapeo de datos a la plantilla oculta del PDF
     document.getElementById('pdf-ticket-num').innerText = "#" + t.ticket_number;
     document.getElementById('pdf-date').innerText = new Date(t.created_at).toLocaleDateString();
-    document.getElementById('pdf-inst').innerText = t.institutions?.name || 'S/N';
-    document.getElementById('pdf-equip').innerText = `${t.equipment?.brand || ''} ${t.equipment?.model || ''}`;
-    document.getElementById('pdf-serial-print').innerText = t.equipment?.serial || 'S/N';
-    document.getElementById('pdf-loc').innerText = `${t.equipment?.physical_location || ''} - ${t.equipment?.location_details || ''}`;
-    document.getElementById('pdf-tech').innerText = t.technician?.full_name || 'Técnico Asignado';
-    document.getElementById('pdf-desc').innerText = t.description || '';
-    document.getElementById('pdf-solution').innerText = `DIAGNÓSTICO: ${t.diagnosis || 'N/A'}\n\nSOLUCIÓN: ${t.solution || 'N/A'}`;
-    document.getElementById('pdf-bw').innerText = t.equipment?.counter_bw || 0;
-    document.getElementById('pdf-col').innerText = t.equipment?.counter_color || 0;
+    document.getElementById('pdf-inst').innerText = t.institutions?.name;
+    document.getElementById('pdf-equip').innerText = t.equipment?.brand + " " + t.equipment?.model;
+    document.getElementById('pdf-tech').innerText = t.technician?.full_name;
+    document.getElementById('pdf-solution').innerText = t.solution;
 
-    // 3. Configuración del motor html2pdf
     const element = document.getElementById('pdf-content');
     const opt = {
-        margin:       0,
-        filename:     `Reporte_Impriartex_T${t.ticket_number}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        margin: 10,
+        filename: `Reporte_${t.ticket_number}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
-    // 4. Ejecutar conversión y descarga
-    const container = document.getElementById('pdf-template-container');
-    container.style.display = 'block'; // Mostrar temporalmente para captura
-
-    html2pdf().set(opt).from(element).save().then(() => {
-        container.style.display = 'none'; // Volver a ocultar
-        console.log("✅ PDF generado con éxito");
-    }).catch(err => {
-        console.error("Error html2pdf:", err);
-        container.style.display = 'none';
-    });
+    html2pdf().set(opt).from(element).save();
 };
