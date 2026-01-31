@@ -125,3 +125,23 @@ async function deleteEquip(id) {
         loadEquipment();
     }
 }
+async function loadIdReferences() {
+    const { data: insts } = await sb.from('institutions').select('id, name').order('name');
+    const container = document.getElementById('idReferenceList');
+    
+    container.innerHTML = insts.map(i => `
+        <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+            <div style="font-size:11px; font-weight:800; color:var(--primary);">${i.name}</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
+                <code style="font-size:9px; color:#64748b;">${i.id.substring(0,8)}...</code>
+                <button onclick="copyToClipboard('${i.id}')" style="border:none; background:none; cursor:pointer; color:var(--accent); font-size:11px;">Copiar</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Llama a esta función dentro del DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    loadEquipment();
+    loadIdReferences(); // <--- Inyectamos la referencia
+});
