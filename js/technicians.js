@@ -1,53 +1,77 @@
-// js/technicians.js - GESTIÓN DE PERSONAL V8.0
+// js/technicians.js - Gestión de Equipo para Alex Loor
 
-// ==========================================
-// 1. INICIALIZACIÓN
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    loadStaff();
+    loadTechnicians();
 });
 
-// ==========================================
-// 2. CARGA DE PERSONAL
-// ==========================================
-async function loadStaff() {
-    // Consultamos perfiles que no sean clientes
-    const { data: staff, error } = await sb
+// 1. Cargar lista de técnicos y supervisores
+async function loadTechnicians() {
+    const { data: techs, error } = await sb
         .from('profiles')
         .select('*')
-        .neq('role', 'client')
+        .neq('role', 'client') // Excluimos a los clientes de esta lista
         .order('full_name');
 
+    const tbody = document.getElementById('techTable');
+    
     if (error) {
-        console.error("Error cargando personal:", error);
+        console.error("Error:", error);
         return;
     }
-    renderStaff(staff);
+
+    tbody.innerHTML = techs.map(t => `
+        <tr>
+            <td><strong>${t.full_name}</strong></td>
+            <td>${t.email || '---'}</td>
+            <td>
+                <span class="${t.role === 'supervisor' ? 'badge-sup' : 'badge-tech'}">
+                    ${t.role.toUpperCase()}
+                </span>
+            </td>
+            <td>
+                <button onclick="deleteTech('${t.id}')" style="border:none; background:none; color:#cbd5e1; cursor:pointer;">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
 }
 
-function renderStaff(staff) {
-    const container = document.getElementById('techList');
+// 2. Registrar nuevo técnico (Acción de Alex)
+document.getElementById('techForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('btnSave');
     
-    if (staff.length === 0) {
-        container.innerHTML = '<p style="color:#94a3b8;">No hay personal técnico registrado aún.</p>';
-        return;
+    btn.disabled = true;
+    btn.innerText = "Registrando...";
+
+    const name = document.getElementById('techName').value;
+    const email = document.getElementById('techEmail').value;
+
+    // Insertamos directamente en la tabla de perfiles
+    const { error } = await sb.from('profiles').insert([
+        { 
+            full_name: name, 
+            email: email, 
+            role: 'technician' 
+        }
+    ]);
+
+    if (error) {
+        alert("Error al registrar: " + error.message);
+    } else {
+        alert("✅ Técnico '" + name + "' registrado exitosamente.");
+        e.target.reset();
+        await loadTechnicians();
     }
 
-    container.innerHTML = staff.map(person => {
-        // Generar iniciales para el avatar
-        const initials = person.full_name ? person.full_name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : '??';
-        
-        return `
-            <div class="tech-card">
-                <div class="avatar">${initials}</div>
-                <div style="flex:1;">
-                    <div style="font-weight:700; color:var(--primary);">${person.full_name}</div>
-                    <div style="font-size:12px; color:#64748b; margin-bottom:5px;">${person.email}</div>
-                    <span class="role-badge" style="${person.role === 'supervisor' ? 'background:#e0e7ff; color:#4338ca;' : ''}">
-                        ${person.role === 'technician' ? 'Técnico' : 'Supervisor'}
-                    </span>
-                </div>
-            </div>
-        `;
-    }).join('');
+    btn.disabled = false;
+    btn.innerText = "Crear Técnico";
+});
+
+// Función para cerrar sesión
+function logout() {
+    sb.auth.signOut().then(() => {
+        window.location.href = 'index.html';
+    });
 }
