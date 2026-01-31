@@ -48,9 +48,13 @@ document.getElementById('techForm').addEventListener('submit', async (e) => {
     const name = document.getElementById('techName').value;
     const email = document.getElementById('techEmail').value;
 
-    // Insertamos directamente en la tabla de perfiles
+    // PASO PROFESIONAL: 
+    // Primero, creamos el perfil con un ID generado aleatoriamente para esta prueba.
+    // (En un sistema SaaS real, aquí se dispara una invitación por correo)
+    
     const { error } = await sb.from('profiles').insert([
         { 
+            id: crypto.randomUUID(), // Generamos un ID único para evitar el error de NULL
             full_name: name, 
             email: email, 
             role: 'technician' 
@@ -68,7 +72,6 @@ document.getElementById('techForm').addEventListener('submit', async (e) => {
     btn.disabled = false;
     btn.innerText = "Crear Técnico";
 });
-
 // Función para cerrar sesión
 function logout() {
     sb.auth.signOut().then(() => {
