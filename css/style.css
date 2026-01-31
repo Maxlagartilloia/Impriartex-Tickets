@@ -1,0 +1,135 @@
+/* css/style.css - ADN Visual de Impriartex */
+:root {
+    --primary: #0f172a;
+    --accent: #3b82f6;
+    --bg: #f1f5f9;
+    --white: #ffffff;
+    --sidebar-width: 260px;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    margin: 0;
+    display: flex;
+}
+
+/* Sidebar Universal */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--primary);
+    height: 100vh;
+    color: white;
+    padding: 25px;
+    position: fixed;
+    box-sizing: border-box;
+}
+
+.sidebar h2 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 40px;
+    color: var(--accent);
+    letter-spacing: 1px;
+}
+
+.sidebar a {
+    color: #94a3b8;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: 0.3s;
+}
+
+.sidebar a:hover, .sidebar a.active {
+    background: #1e293b;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Contenido Principal */
+.main-content {
+    margin-left: var(--sidebar-width);
+    padding: 40px;
+    width: calc(100% - var(--sidebar-width));
+    box-sizing: border-box;
+}
+
+.card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Formularios Grid */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    align-items: end;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 11px;
+    font-weight: 800;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+input, select {
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    outline: none;
+    background: #f8fafc;
+}
+
+.btn-save {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: left;
+    padding: 15px;
+    color: #64748b;
+    font-size: 12px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+td {
+    padding: 18px 15px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
