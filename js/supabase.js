@@ -1,13 +1,17 @@
-// js/supabase.js - CONEXIÓN MAESTRA IMPRIARTEX V8.0
+// js/supabase.js - CONEXIÓN MAESTRA INTEGRADA (IMPRIARTEX V8.0)
 
-// 1. Configuración de Credenciales
-const SUPABASE_URL = 'https://hhrqbatetzpwdhdovgjs.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_Sf30BJgoL725IQ_g5UiFEA_MOH9YZcu'; // Tu Anon Key pública
+// Credenciales integradas del proyecto
+const LOCAL_URL = 'https://hhrqbatetzpwdhdovgjs.supabase.co';
+const LOCAL_KEY = 'sb_publishable_Sf30BJgoL725IQ_g5UiFEA_MOH9YZcu';
 
-// 2. Inicialización del Cliente Global
+// Lógica de detección: Usa variables de Netlify si existen, de lo contrario usa las locales
+const SUPABASE_URL = window.env?.SUPABASE_URL || LOCAL_URL;
+const SUPABASE_KEY = window.env?.SUPABASE_KEY || LOCAL_KEY;
+
+// Inicialización del Cliente Global
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 3. Exportación para uso en otros scripts
+// Exportación para uso en todo el ecosistema de la App
 window.sb = sb;
 
-console.log("🚀 Impriartex: Conexión con Supabase establecida correctamente.");
+console.log("🚀 Impriartex: Conexión Enterprise establecida con Supabase");
