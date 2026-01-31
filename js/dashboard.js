@@ -1,73 +1,85 @@
-// js/dashboard.js - Motor de Datos Impriartex
+// js/dashboard.js - SISTEMA DE CONTROL INTELIGENTE V8.0
 
 let userProfile = null;
 
+// ==========================================
+// 1. INICIALIZACIÓN Y ROLES
+// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     const { data: { user } } = await sb.auth.getUser();
-    
-    // Obtener perfil para conocer el Rol
     const { data: profile } = await sb.from('profiles').select('*').eq('id', user.id).single();
     userProfile = profile;
 
-    // UI por Rol
-    document.getElementById('userRole').innerText = profile.role.toUpperCase();
+    // Configurar Interfaz por Rol
+    document.getElementById('pageTitle').innerText = `Dashboard ${profile.role.toUpperCase()}`;
+    document.getElementById('userBadge').innerText = profile.full_name;
+    
     if(profile.role === 'supervisor') {
         document.getElementById('adminMenu').style.display = 'block';
     }
 
-    // Fechas por defecto (Mes actual)
+    // Fechas por defecto (Mes en curso)
     const now = new Date();
     document.getElementById('dateTo').valueAsDate = now;
     document.getElementById('dateFrom').valueAsDate = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    loadDashboardData();
+    initDashboard();
 });
 
-async function loadDashboardData() {
+// ==========================================
+// 2. MOTOR DE DATOS (KPIs)
+// ==========================================
+async function initDashboard() {
     const from = document.getElementById('dateFrom').value;
-    const to = document.getElementById('dateTo').value;
+    const to = document.getElementById('dateTo').value + 'T23:59:59';
 
-    let query = sb.from('tickets').select(`
-        *,
-        institutions(name),
-        equipment(model)
-    `)
-    .gte('created_at', from)
-    .lte('created_at', to + 'T23:59:59');
+    let query = sb.from('tickets').select('status, created_at, institution_id, technician_id');
 
-    // Filtros de seguridad (ADN del sistema)
-    if(userProfile.role === 'client') {
-        query = query.eq('institution_id', userProfile.institution_id);
-    } else if(userProfile.role === 'technician') {
-        query = query.eq('technician_id', userProfile.id);
-    }
+    // Filtros de Seguridad Atómicos
+    if(userProfile.role === 'client') query = query.eq('institution_id', userProfile.institution_id);
+    if(userProfile.role === 'technician') query = query.eq('technician_id', userProfile.id);
 
-    const { data: tickets, error } = await query.order('created_at', { ascending: false });
+    const { data: tickets, error } = await query.gte('created_at', from).lte('created_at', to);
 
-    if(!error) renderDashboard(tickets);
+    if (error) return console.error(error);
+
+    renderKPIs(tickets);
+    renderRoleSpecificContent(tickets);
 }
 
-function renderDashboard(tickets) {
+function renderKPIs(tickets) {
     const open = tickets.filter(t => t.status === 'open').length;
-    const progress = tickets.filter(t => t.status === 'progress').length;
+    const process = tickets.filter(t => t.status === 'progress').length;
     const closed = tickets.filter(t => t.status === 'closed').length;
     const total = tickets.length;
 
-    document.getElementById('openCount').innerText = open;
-    document.getElementById('processCount').innerText = progress;
-    document.getElementById('closedCount').innerText = closed;
+    document.getElementById('kpi-open').innerText = open;
+    document.getElementById('kpi-process').innerText = process;
+    document.getElementById('kpi-closed').innerText = closed;
     
     const sla = total > 0 ? Math.round((closed / total) * 100) : 0;
-    document.getElementById('slaPerc').innerText = sla + "%";
+    document.getElementById('kpi-sla').innerText = sla + "%";
+}
 
-    const tbody = document.getElementById('ticketTable');
-    tbody.innerHTML = tickets.map(t => `
-        <tr>
-            <td>#${t.ticket_number}</td>
-            <td>${new Date(t.created_at).toLocaleDateString()}</td>
-            <td>${t.institutions?.name || '---'}</td>
-            <td>${t.equipment?.model || '---'}</td>
-            <td><span class="status status-${t.status}">${t.status.toUpperCase()}</span></td>
-        </tr>
-    `).join('');
+// ==========================================
+// 3. CONTENIDO ESPECÍFICO POR ROL
+// ==========================================
+function renderRoleSpecificContent(tickets) {
+    const container = document.getElementById('dynamicContent');
+    
+    if(userProfile.role === 'supervisor') {
+        container.innerHTML = `
+            <div class="card">
+                <h3 class="kpi-label">Auditoría de Servicios Recientes</h3>
+                <p style="color:#64748b; font-size:13px;">Mostrando los últimos tickets generados en el rango de fecha.</p>
+                </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="card" style="text-align:center;">
+                <h3 class="kpi-label">Resumen de Actividad</h3>
+                <p>Bienvenido al portal de Impriartex. Use el menú lateral para gestionar sus servicios.</p>
+            </div>
+        `;
+    }
 }
