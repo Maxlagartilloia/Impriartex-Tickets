@@ -4,33 +4,28 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTechnicians();
 });
 
-// 1. Cargar lista de técnicos y supervisores
 async function loadTechnicians() {
     const { data: techs, error } = await sb
         .from('profiles')
         .select('*')
-        .neq('role', 'client') // Excluimos a los clientes de esta lista
+        .neq('role', 'client')
         .order('full_name');
 
     const tbody = document.getElementById('techTable');
-    
-    if (error) {
-        console.error("Error:", error);
-        return;
-    }
+    if (error) return;
 
     tbody.innerHTML = techs.map(t => `
         <tr>
             <td><strong>${t.full_name}</strong></td>
             <td>${t.email || '---'}</td>
             <td>
-                <span class="${t.role === 'supervisor' ? 'badge-sup' : 'badge-tech'}">
+                <span style="padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; background: ${t.role === 'supervisor' ? '#fef3c7' : '#eff6ff'}; color: ${t.role === 'supervisor' ? '#92400e' : '#1e40af'};">
                     ${t.role.toUpperCase()}
                 </span>
             </td>
             <td>
-                <button onclick="deleteTech('${t.id}')" style="border:none; background:none; color:#cbd5e1; cursor:pointer;">
-                    <i class="fas fa-trash"></i>
+                <button onclick="deleteTech('${t.id}')" style="border:none; background:none; color:#ef4444; cursor:pointer;">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             </td>
         </tr>
