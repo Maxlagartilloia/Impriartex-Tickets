@@ -18,14 +18,33 @@
         .main { flex: 1; overflow-y: auto; padding: 30px; }
         .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
         
-        /* Formulario Estilo Enterprise */
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: flex-end; }
-        .form-group label { display: block; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
-        input, select { width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; box-sizing: border-box; }
-        input:focus { border-color: var(--accent); }
-
-        .btn-save { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; }
-
+      <form id="instForm" class="form-grid">
+    <div class="form-group">
+        <label>Nombre de la Entidad</label>
+        <input type="text" id="instName" placeholder="Ej: Municipio Shushufindi" required>
+    </div>
+    <div class="form-group">
+        <label>Dirección Principal</label>
+        <input type="text" id="instAddress" placeholder="Calle y Av.">
+    </div>
+    <div class="form-group">
+        <label>Contacto Responsable (Admin)</label>
+        <input type="text" id="instContact" placeholder="Nombre de la persona a cargo">
+    </div>
+    <div class="form-group">
+        <label>Teléfono de Contacto</label>
+        <input type="tel" id="instPhone" placeholder="Ej: 099-999-9999">
+    </div>
+    <div class="form-group">
+        <label>Técnico Fijo Asignado</label>
+        <select id="techSelect" required>
+            <option value="">Cargando técnicos...</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn-save">Guardar Cliente</button>
+    </div>
+</form>
         /* Tabla */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; }
