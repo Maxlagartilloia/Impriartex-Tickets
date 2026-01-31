@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario | Impriartex</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css"> </head>
+    <link rel="stylesheet" href="css/style.css">
+</head>
 <body>
 
     <aside class="sidebar">
@@ -24,7 +25,7 @@
         <header class="top-bar">
             <h2 style="font-size: 18px; margin: 0;">Gestión de Equipos e Inventario</h2>
             <div style="display:flex; gap:10px;">
-                <button onclick="window.location.href='template.csv'" class="btn-primary" style="background:#475569;"><i class="fas fa-file-csv"></i> Plantilla</button>
+                <button onclick="downloadCSVTemplate()" class="btn-primary" style="background:#475569;"><i class="fas fa-file-csv"></i> Plantilla</button>
                 <button onclick="document.getElementById('csvInput').click()" class="btn-primary"><i class="fas fa-upload"></i> Carga Masiva</button>
                 <input type="file" id="csvInput" style="display:none" accept=".csv">
             </div>
@@ -47,13 +48,20 @@
                         <tr>
                             <th>Marca y Modelo</th>
                             <th>Serie / IP</th>
-                            <th>Ubicación</th>
+                            <th>Ubicación / Cliente</th>
                             <th>Estado</th>
                             <th>Acción</th>
                         </tr>
                     </thead>
                     <tbody id="equipTable"></tbody>
                 </table>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-key"></i> Referencia de IDs para CSV</h3>
+                <p style="font-size:12px; color:#64748b; margin-bottom:15px;">Copia estos IDs y pégalos en la columna <strong>ID_Institucion_UUID</strong> de tu archivo Excel/CSV.</p>
+                <div id="idReferenceList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    </div>
             </div>
         </div>
     </main>
