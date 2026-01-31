@@ -1,21 +1,37 @@
 // js/institutions.js - GESTIÓN DE CLIENTES V8.0
 
 // ==========================================
-// 1. INICIALIZACIÓN
+// 3. ACCIONES (GUARDAR Y ELIMINAR)
 // ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    // Verificar que solo el Supervisor use este módulo
-    const { data: { user } } = await sb.auth.getUser();
-    const { data: profile } = await sb.from('profiles').select('role').eq('id', user.id).single();
+document.getElementById('instForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
     
-    if(profile.role !== 'supervisor') {
-        window.location.href = 'dashboard.html';
-        return;
-    }
+    const btn = e.target.querySelector('button');
+    btn.disabled = true;
+    btn.innerText = "Guardando...";
 
-    await loadTechnicians();
-    await loadInstitutions();
-});
+    // CAPTURA DE DATOS CON NUEVOS CAMPOS ENTERPRISE
+    const newInst = {
+        name: document.getElementById('instName').value,
+        address: document.getElementById('instAddress').value,
+        contact_name: document.getElementById('instContact').value, // Nuevo: Nombre Admin
+        contact_phone: document.getElementById('instPhone').value, // Nuevo: Teléfono Admin
+        technician_id: document.getElementById('techSelect').value
+    };
+
+    const { error } = await sb.from('institutions').insert([newInst]);
+
+    if(error) {
+        alert("Error al guardar: " + error.message);
+    } else {
+        alert("✅ Institución y Contacto registrados correctamente.");
+        e.target.reset();
+        await loadInstitutions();
+    }
+    
+    btn.disabled = false;
+    btn.innerText = "Guardar Cliente";
+});;
 
 // ==========================================
 // 2. CARGA DE DATOS (TÉCNICOS Y CLIENTES)
@@ -38,31 +54,43 @@ async function loadTechnicians() {
 async function loadInstitutions() {
     const { data: insts, error } = await sb
         .from('institutions')
-        .select(`*, technician:profiles!institutions_technician_id_fkey(full_name)`)
+        .select(`
+            *,
+            technician:profiles!institutions_technician_id_fkey(full_name)
+        `)
         .order('name');
 
     const tbody = document.getElementById('instTable');
     
+    if (insts.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No hay clientes registrados.</td></tr>';
+        return;
+    }
+
     tbody.innerHTML = insts.map(i => `
         <tr>
             <td>
-                <div style="font-weight:700;">${i.name}</div>
-                <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
-                    <code style="font-size:10px; background:#f1f5f9; padding:2px 5px; border-radius:4px; color:#64748b;">${i.id}</code>
-                    <button onclick="copyToClipboard('${i.id}')" style="border:none; background:none; cursor:pointer; color:var(--accent); font-size:12px;" title="Copiar ID para CSV">
-                        <i class="fas fa-copy"></i>
-                    </button>
+                <strong>${i.name}</strong><br>
+                <small style="color:#64748b;"><i class="fas fa-user"></i> ${i.contact_name || 'Sin contacto'}</small>
+            </td>
+            <td>
+                ${i.address || '---'}<br>
+                <small style="color:#10b981;"><i class="fas fa-phone"></i> ${i.contact_phone || '---'}</small>
+            </td>
+            <td>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fas fa-user-check" style="color:var(--accent);"></i>
+                    <span>${i.technician?.full_name || 'PENDIENTE'}</span>
                 </div>
             </td>
-            <td>${i.address || '---'}</td>
-            <td><i class="fas fa-user-wrench" style="color:var(--accent);"></i> ${i.technician?.full_name || 'Sin asignar'}</td>
             <td style="text-align:right;">
-                <button onclick="deleteInst('${i.id}')" style="background:none; border:none; color:#cbd5e1; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                <button onclick="deleteInst('${i.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </td>
         </tr>
     `).join('');
 }
-
 // Utilidad para copiar al portapapeles
 window.copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
