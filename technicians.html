@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Técnicos | Impriartex</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="css/style.css"> </head>
+    <link rel="stylesheet" href="css/style.css">
+</head>
 <body>
 
     <aside class="sidebar">
@@ -22,28 +23,29 @@
 
     <main class="main">
         <header class="top-bar">
-            <h2 style="font-size: 18px; margin: 0;">Gestión de Personal Técnico</h2>
-            <span id="userBadge" style="font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 20px; background: #e0e7ff; color: #4338ca;"></span>
+            <h2 style="font-size: 18px; margin: 0;">Gestión de Técnicos</h2>
+            <div id="userBadge" style="font-size: 12px; font-weight: 700;"></div>
         </header>
 
         <div class="content">
             <div class="card">
-                <h3><i class="fas fa-user-plus"></i> Registrar Nuevo Miembro</h3>
+                <h3><i class="fas fa-user-plus"></i> Registrar Nuevo Técnico</h3>
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 20px;">Nota: El técnico debe estar registrado previamente en Auth para aparecer aquí (o puedes crearlo directamente si implementas la lógica de invitación).</p>
                 <form id="techForm" class="form-grid">
                     <div class="form-group">
                         <label>Nombre Completo</label>
-                        <input type="text" id="techName" placeholder="Ej: Jecser Mera" required>
+                        <input type="text" id="techName" required placeholder="Nombre del colaborador">
                     </div>
                     <div class="form-group">
                         <label>Correo Electrónico</label>
-                        <input type="email" id="techEmail" placeholder="correo@impriartex.com" required>
+                        <input type="email" id="techEmail" required placeholder="correo@impriartex.com">
                     </div>
-                    <button type="submit" class="btn-primary" id="btnSave">Crear Técnico</button>
+                    <button type="submit" class="btn-primary">Registrar en Sistema</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>Equipo Registrado</h3>
+                <h3>Equipo Activo</h3>
                 <table>
                     <thead>
                         <tr>
