@@ -1,7 +1,10 @@
-/* css/style.css - ADN Visual de Impriartex */
+/* css/style.css */
 :root {
     --primary: #0f172a;
     --accent: #3b82f6;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
     --bg: #f1f5f9;
     --white: #ffffff;
     --sidebar-width: 260px;
@@ -12,73 +15,88 @@ body {
     background: var(--bg);
     margin: 0;
     display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 
-/* Sidebar Universal */
+/* Sidebar Consistente */
 .sidebar {
     width: var(--sidebar-width);
     background: var(--primary);
-    height: 100vh;
     color: white;
+    display: flex;
+    flex-direction: column;
     padding: 25px;
-    position: fixed;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
-.sidebar h2 {
-    font-size: 1.4rem;
+.sidebar-brand {
     font-weight: 800;
+    font-size: 22px;
     margin-bottom: 40px;
-    color: var(--accent);
-    letter-spacing: 1px;
-}
-
-.sidebar a {
-    color: #94a3b8;
-    text-decoration: none;
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    transition: 0.3s;
+    color: var(--accent);
 }
 
-.sidebar a:hover, .sidebar a.active {
+.menu-item {
+    padding: 14px 18px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: 0.3s;
+    margin-bottom: 8px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.menu-item:hover, .menu-item.active {
     background: #1e293b;
     color: white;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 /* Contenido Principal */
-.main-content {
-    margin-left: var(--sidebar-width);
-    padding: 40px;
-    width: calc(100% - var(--sidebar-width));
-    box-sizing: border-box;
+.main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
+.top-bar {
+    background: white;
+    padding: 15px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+    min-height: 70px;
+}
+
+.content { padding: 40px; }
+
+/* Tarjetas y Forms */
 .card {
-    background: var(--white);
-    padding: 30px;
+    background: white;
+    padding: 25px;
     border-radius: 20px;
     box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
     margin-bottom: 30px;
     border: 1px solid rgba(0,0,0,0.05);
 }
 
-/* Formularios Grid */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 20px;
     align-items: end;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
 }
 
 label {
@@ -87,49 +105,30 @@ label {
     color: #64748b;
     text-transform: uppercase;
     margin-bottom: 8px;
+    display: block;
 }
 
 input, select {
-    padding: 14px;
+    width: 100%;
+    padding: 12px;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    outline: none;
+    border-radius: 10px;
     background: #f8fafc;
+    box-sizing: border-box;
 }
 
-.btn-save {
+.btn-primary {
     background: var(--accent);
     color: white;
     border: none;
-    padding: 15px;
-    border-radius: 12px;
+    padding: 12px 25px;
+    border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
     transition: 0.3s;
 }
 
-.btn-save:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(59, 130, 246, 0.4);
-}
-
-/* Tablas */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th {
-    text-align: left;
-    padding: 15px;
-    color: #64748b;
-    font-size: 12px;
-    text-transform: uppercase;
-    border-bottom: 2px solid #f1f5f9;
-}
-
-td {
-    padding: 18px 15px;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 14px;
-}
+/* Tablas Enterprise */
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 15px; color: #64748b; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+td { padding: 18px 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
