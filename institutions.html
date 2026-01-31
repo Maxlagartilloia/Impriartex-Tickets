@@ -3,60 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instituciones | Impriartex</title>
+    <title>Clientes e Instituciones | Impriartex</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; }
-        .main { flex: 1; padding: 30px; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .form-inline { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: flex-end; }
-        input, select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
-        .btn-add { background: var(--primary); color: white; border: none; padding: 11px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --danger: #ef4444; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
+        
+        /* Sidebar (Mismo estilo que Dashboard) */
+        .sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; box-sizing: border-box; }
+        .sidebar-brand { font-weight: 800; font-size: 20px; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        .menu-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.3s; margin-bottom: 5px; color: #94a3b8; text-decoration: none; }
+        .menu-item:hover, .menu-item.active { background: #1e293b; color: white; }
+
+        .main { flex: 1; overflow-y: auto; padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        
+        /* Formulario Estilo Enterprise */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: flex-end; }
+        .form-group label { display: block; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+        input, select { width: 100%; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; box-sizing: border-box; }
+        input:focus { border-color: var(--accent); }
+
+        .btn-save { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; }
+
+        /* Tabla */
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 12px; background: #f8fafc; color: #64748b; font-size: 12px; text-transform: uppercase; }
-        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
-        .btn-del { color: #ef4444; cursor: pointer; border: none; background: none; }
+        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="main">
+
+    <aside class="sidebar">
+        <div class="sidebar-brand"><i class="fas fa-layer-group"></i> IMPRIARTEX</div>
+        <a href="dashboard.html" class="menu-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
+        <a href="tickets.html" class="menu-item"><i class="fas fa-ticket-alt"></i> Soporte Técnico</a>
+        <a href="equipment.html" class="menu-item"><i class="fas fa-print"></i> Inventario</a>
+        <div id="adminMenu" style="border-top: 1px solid #1e293b; margin-top: 15px; padding-top: 15px;">
+            <a href="institutions.html" class="menu-item active"><i class="fas fa-building"></i> Clientes</a>
+            <a href="technicians.html" class="menu-item"><i class="fas fa-users-cog"></i> Técnicos</a>
+        </div>
+    </aside>
+
+    <main class="main">
         <div class="card">
-            <h3 style="margin-top:0;">🏢 Registrar Nueva Institución</h3>
-            <form id="instForm" class="form-inline">
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:700; margin-bottom:5px;">NOMBRE DE LA ENTIDAD</label>
+            <h3 style="margin-top:0; font-size:18px;">🏢 Registrar Nueva Institución / Cliente</h3>
+            <form id="instForm" class="form-grid">
+                <div class="form-group">
+                    <label>Nombre de la Entidad</label>
                     <input type="text" id="instName" placeholder="Ej: Municipio Shushufindi" required>
                 </div>
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:700; margin-bottom:5px;">DIRECCIÓN</label>
-                    <input type="text" id="instAddress" placeholder="Calle Principal s/n">
+                <div class="form-group">
+                    <label>Dirección Principal</label>
+                    <input type="text" id="instAddress" placeholder="Calle y Av.">
                 </div>
-                <div>
-                    <label style="display:block; font-size:12px; font-weight:700; margin-bottom:5px;">TÉCNICO ASIGNADO</label>
+                <div class="form-group">
+                    <label>Técnico Fijo Asignado</label>
                     <select id="techSelect" required>
                         <option value="">Cargando técnicos...</option>
                     </select>
                 </div>
-                <button type="submit" class="btn-add">Guardar Institución</button>
+                <div class="form-group">
+                    <button type="submit" class="btn-save">Guardar Cliente</button>
+                </div>
             </form>
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0;">Directorio de Clientes</h3>
+            <h3 style="margin-top:0; font-size:18px;">Directorio de Clientes Activos</h3>
             <table>
                 <thead>
                     <tr>
-                        <th>Nombre</th>
+                        <th>Institución</th>
                         <th>Ubicación</th>
                         <th>Técnico Responsable</th>
-                        <th>Acciones</th>
+                        <th style="text-align:right;">Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="instTable"></tbody>
+                <tbody id="instTable">
+                    <tr><td colspan="4" style="text-align:center; padding:20px;">Cargando clientes...</td></tr>
+                </tbody>
             </table>
         </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
