@@ -3,58 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Equipo Técnico | Impriartex</title>
+    <title>Gestión de Técnicos | Impriartex</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --tech: #10b981; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --white: #ffffff; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; }
         
-        /* Sidebar Estándar */
-        .sidebar { width: 260px; background: var(--primary); color: white; padding: 20px; box-sizing: border-box; }
-        .sidebar-brand { font-weight: 800; font-size: 20px; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
-        .menu-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.3s; margin-bottom: 5px; color: #94a3b8; text-decoration: none; }
-        .menu-item:hover, .menu-item.active { background: #1e293b; color: white; }
+        .sidebar { width: 250px; background: var(--primary); height: 100vh; color: white; padding: 20px; position: fixed; }
+        .sidebar h2 { font-size: 1.2rem; margin-bottom: 30px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+        .sidebar a { color: #cbd5e1; text-decoration: none; display: block; padding: 12px; border-radius: 8px; margin-bottom: 5px; }
+        .sidebar a:hover, .sidebar a.active { background: #1e293b; color: white; }
 
-        .main { flex: 1; overflow-y: auto; padding: 30px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
-
-        /* Lista de Técnicos */
-        .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .tech-card { 
-            background: white; border-radius: 12px; padding: 20px; 
-            border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 15px;
-            transition: 0.2s;
-        }
-        .tech-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .avatar { 
-            width: 50px; height: 50px; background: #e2e8f0; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--primary);
-        }
-        .role-badge { font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 10px; text-transform: uppercase; background: #dcfce7; color: #15803d; }
+        .main-content { margin-left: 250px; padding: 40px; width: calc(100% - 250px); }
+        .card { background: var(--white); padding: 25px; border-radius: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; align-items: end; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 8px; }
+        input { padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; }
+        
+        .btn-save { background: var(--accent); color: white; border: none; padding: 13px; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-save:hover { background: #2563eb; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 12px; border-bottom: 2px solid #f1f5f9; color: #64748b; font-size: 12px; text-transform: uppercase; }
+        td { padding: 15px 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+        .badge-tech { background: #eff6ff; color: #1e40af; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+        .badge-sup { background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="sidebar-brand"><i class="fas fa-layer-group"></i> IMPRIARTEX</div>
-        <a href="dashboard.html" class="menu-item"><i class="fas fa-chart-pie"></i> Dashboard</a>
-        <a href="tickets.html" class="menu-item"><i class="fas fa-ticket-alt"></i> Soporte Técnico</a>
-        <a href="equipment.html" class="menu-item"><i class="fas fa-print"></i> Inventario</a>
-        <div id="adminMenu" style="border-top: 1px solid #1e293b; margin-top: 15px; padding-top: 15px;">
-            <a href="institutions.html" class="menu-item"><i class="fas fa-building"></i> Clientes</a>
-            <a href="technicians.html" class="menu-item active"><i class="fas fa-users-cog"></i> Técnicos</a>
-        </div>
-    </aside>
+    <div class="sidebar">
+        <h2>IMPRIARTEX</h2>
+        <a href="dashboard.html"><i class="fas fa-chart-pie"></i> Dashboard</a>
+        <a href="institutions.html"><i class="fas fa-building"></i> Clientes</a>
+        <a href="equipment.html"><i class="fas fa-print"></i> Inventario</a>
+        <a href="tickets.html"><i class="fas fa-ticket-alt"></i> Soporte</a>
+        <a href="technicians.html" class="active"><i class="fas fa-user-wrench"></i> Técnicos</a>
+        <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Salir</a>
+    </div>
 
-    <main class="main">
+    <div class="main-content">
         <div class="card">
-            <h3 style="margin-top:0;">👥 Gestión del Equipo de Trabajo</h3>
-            <p style="color:#64748b; font-size:14px;">Lista de técnicos y personal con acceso al sistema de Impriartex.</p>
+            <h3><i class="fas fa-plus-circle"></i> Registrar Miembro del Equipo</h3>
+            <form id="techForm" class="form-grid">
+                <div class="form-group">
+                    <label>Nombre Completo</label>
+                    <input type="text" id="techName" placeholder="Nombre del técnico" required>
+                </div>
+                <div class="form-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" id="techEmail" placeholder="correo@impriartex.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Contraseña Acceso</label>
+                    <input type="text" id="techPass" value="Impriartex2026" required>
+                </div>
+                <button type="submit" class="btn-save" id="btnSave">Crear Técnico</button>
+            </form>
         </div>
 
-        <div id="techList" class="tech-grid">
-            </div>
-    </main>
+        <div class="card">
+            <h3><i class="fas fa-list"></i> Personal Activo</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol en el Sistema</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="techTable">
+                    </tbody>
+            </table>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
