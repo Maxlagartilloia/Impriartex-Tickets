@@ -32,21 +32,31 @@ async function loadTickets() {
 function renderTickets(tickets) {
     const grid = document.getElementById('ticketsGrid');
     grid.innerHTML = tickets.map(t => {
-        // Lógica de botones según rol
         let btnAccion = '';
+        
+        // Si el ticket está abierto y soy técnico -> Botón ATENDER
         if(userProfile.role === 'technician' && t.status !== 'closed') {
-            btnAccion = `<button onclick="openAttendModal('${t.id}', '${t.equipment_id}', '${t.equipment?.model}')" style="background:var(--accent); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Atender</button>`;
+            btnAccion = `<button onclick="openAttendModal('${t.id}', '${t.equipment_id}', '${t.equipment?.model}')" style="background:var(--accent); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; width:100%; margin-top:10px;">Atender Servicio</button>`;
         }
+        
+        // Si el ticket está cerrado -> Botón PDF (Disponible para todos)
         if(t.status === 'closed') {
-            btnAccion = `<button onclick="downloadPDF('${t.id}')" style="background:var(--closed); color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fas fa-file-pdf"></i> PDF</button>`;
+            btnAccion = `<button onclick="downloadPDF('${t.id}')" style="background:var(--closed); color:white; border:none; padding:8px 15px; border-radius:6px; cursor:pointer; width:100%; margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fas fa-file-pdf"></i> Descargar Reporte
+            </button>`;
         }
 
+        const statusLabel = t.status === 'open' ? 'Abierto' : (t.status === 'progress' ? 'En Proceso' : 'Finalizado');
+
         return `
-            <div class="ticket-card">
-                <h4>${t.equipment?.model}</h4>
-                <p>${t.description}</p>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="status-badge">${t.status}</span>
+            <div class="ticket-card" style="border-top-color: ${t.status === 'closed' ? 'var(--closed)' : 'var(--open)'}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-size:11px; font-weight:bold; color:#94a3b8;">#${t.ticket_number}</span>
+                    <span style="font-size:10px; font-weight:800; text-transform:uppercase; color:${t.status === 'closed' ? 'var(--closed)' : 'var(--open)'}">${statusLabel}</span>
+                </div>
+                <h4 style="margin:0 0 10px 0;">${t.equipment?.model || 'Equipo desconocido'}</h4>
+                <p style="font-size:13px; color:#475569; margin-bottom:15px;">${t.description}</p>
+                <div style="border-top:1px solid #f1f5f9; padding-top:10px;">
                     ${btnAccion}
                 </div>
             </div>
