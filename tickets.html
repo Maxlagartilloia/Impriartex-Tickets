@@ -56,8 +56,49 @@
         </div>
     </div>
 
-    <div id="pdf-template-container">
+  <div id="pdf-template-container" style="display: none;">
+        <div id="pdf-content" style="width: 210mm; padding: 20mm; font-family: 'Inter', Arial, sans-serif; background: white; color: #1e293b;">
+            
+            <div style="display: flex; justify-content: space-between; border-bottom: 3px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px;">
+                <div>
+                    <h1 style="margin: 0; color: #0f172a; font-size: 28px;">IMPRIARTEX</h1>
+                    <p style="margin: 0; font-size: 12px; color: #64748b;">REPORTE TÉCNICO OFICIAL</p>
+                </div>
+                <div style="text-align: right;">
+                    <h2 style="margin: 0; color: #ef4444;" id="pdf-ticket-num">#0000</h2>
+                    <p style="margin: 0; font-size: 12px;" id="pdf-date"></p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                <div><strong>CLIENTE:</strong> <div id="pdf-inst"></div></div>
+                <div><strong>EQUIPO:</strong> <div id="pdf-equip"></div></div>
+                <div><strong>SERIE:</strong> <span id="pdf-serial-print"></span></div>
+                <div><strong>TÉCNICO:</strong> <div id="pdf-tech"></div></div>
+                <div style="grid-column: span 2;"><strong>UBICACIÓN:</strong> <div id="pdf-loc"></div></div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">FALLA REPORTADA</h3>
+                <p id="pdf-desc" style="font-size: 13px; line-height: 1.5;"></p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px;">DIAGNÓSTICO Y SOLUCIÓN</h3>
+                <pre id="pdf-solution" style="font-size: 13px; line-height: 1.5; font-family: inherit; white-space: pre-wrap;"></pre>
+            </div>
+
+            <div style="display: flex; gap: 40px; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 40px;">
+                <div><strong>CONTADOR B/N:</strong> <span id="pdf-bw"></span></div>
+                <div><strong>CONTADOR COLOR:</strong> <span id="pdf-col"></span></div>
+            </div>
+
+            <div style="margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; text-align: center;">
+                <div style="border-top: 1px solid #000; padding-top: 10px; font-size: 12px;">FIRMA TÉCNICO</div>
+                <div style="border-top: 1px solid #000; padding-top: 10px; font-size: 12px;">CONFORMIDAD CLIENTE</div>
+            </div>
         </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
