@@ -1,54 +1,67 @@
-<div id="modalAttend" class="modal-overlay">
-    <div class="modal-3d" style="max-width: 600px;">
-        <h3 style="margin-top:0; color:var(--primary);"><i class="fas fa-wrench"></i> Registro de Servicio Técnico</h3>
-        <p id="attendInfo" style="font-size: 13px; color: #64748b; background: #f8fafc; padding: 10px; border-radius: 8px;"></p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Soporte Técnico | Impriartex</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        /* 1. ESTILOS BASE (Ya los tienes) */
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; --open: #ef4444; --process: #f59e0b; --closed: #10b981; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; }
+        .main { flex: 1; padding: 30px; }
+        .tickets-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .ticket-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid var(--accent); }
         
-        <form id="formAttend">
-            <input type="hidden" id="attendTicketId">
-            <input type="hidden" id="attendEquipId">
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label>CONTADOR B/N</label>
-                    <input type="number" id="cntBW" placeholder="0" required>
-                </div>
-                <div class="form-group">
-                    <label>CONTADOR COLOR</label>
-                    <input type="number" id="cntColor" placeholder="0">
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>DIAGNÓSTICO DEL PROBLEMA</label>
-                <textarea id="txtDiagnosis" rows="2" placeholder="¿Qué encontró al llegar?" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>SOLUCIÓN / TRABAJO REALIZADO</label>
-                <textarea id="txtSolution" rows="2" placeholder="Detalle de la reparación..." required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>REPUESTOS / TÓNER</label>
-                <input type="text" id="txtSpares" placeholder="Ej: Rodillo de calor, Tóner Negro...">
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div class="form-group">
-                    <label>ESTADO FINAL</label>
-                    <select id="selStatus">
-                        <option value="progress">En Proceso (Pendiente)</option>
-                        <option value="closed">Finalizado (Operativo)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>HORA DE SALIDA</label>
-                    <input type="time" id="departureTime" required>
-                </div>
-            </div>
-
-            <button type="submit" class="btn-primary" style="background:var(--success)">Finalizar y Guardar Servicio</button>
-            <button type="button" onclick="closeModals()" style="background:none; border:none; color:#94a3b8; width:100%; margin-top:10px; cursor:pointer;">Cerrar sin guardar</button>
-        </form>
+        /* 2. ESTILOS MODAL 3D */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-3d { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); }
+        
+        /* 3. ESTILOS PDF (OCULTO) */
+        #pdf-template-container { display: none; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+            <h2>Centro de Soporte Técnico</h2>
+            <button id="btnNewTicket" onclick="openCreateModal()" style="display:none; background:var(--primary); color:white; padding:12px; border-radius:8px; border:none; cursor:pointer;">+ Nuevo Reporte</button>
+        </div>
+        <div id="ticketsGrid" class="tickets-container"></div>
     </div>
-</div>
+
+    <div id="contenedor-modales">
+        <div id="modalCreate" class="modal-overlay">
+            <div class="modal-3d">
+                <h3>📝 Reportar Falla</h3>
+                <form id="formTicket">
+                    <select id="selectEquip" style="width:100%; padding:10px; margin-bottom:10px;"></select>
+                    <textarea id="txtDesc" placeholder="Descripción..." style="width:100%; height:100px; margin-bottom:10px;"></textarea>
+                    <button type="submit" style="width:100%; background:var(--primary); color:white; padding:10px; border:none; border-radius:8px;">Enviar</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="modalAttend" class="modal-overlay">
+            <div class="modal-3d">
+                <h3>🔧 Atención Técnica</h3>
+                <form id="formAttend">
+                    <input type="hidden" id="attendTicketId">
+                    <input type="hidden" id="attendEquipId">
+                    <input type="number" id="cntBW" placeholder="Contador B/N" style="width:100%; margin-bottom:10px;">
+                    <textarea id="txtDiagnosis" placeholder="Diagnóstico..." style="width:100%; margin-bottom:10px;"></textarea>
+                    <button type="submit" style="width:100%; background:var(--closed); color:white; padding:10px; border:none; border-radius:8px;">Cerrar Servicio</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="pdf-template-container">
+        </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/security.js"></script>
+    <script src="js/tickets.js"></script>
+</body>
+</html>
