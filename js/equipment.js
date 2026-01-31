@@ -1,77 +1,57 @@
-// js/equipment.js - GESTIÓN DE INVENTARIO E IMPORTACIÓN V8.0
+// js/equipment.js - GESTIÓN DE INVENTARIO V9.0
 
-// ==========================================
-// 1. INICIALIZACIÓN
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     loadEquipment();
+    loadIdReferences(); // Para que Alex copie los IDs de las instituciones
+    
+    // Escuchador para búsqueda en tiempo real
+    document.getElementById('searchInput').addEventListener('input', filterTable);
+    
+    // Escuchador para carga masiva
+    document.getElementById('csvInput').addEventListener('change', processCSV);
 });
 
-// ==========================================
-// 2. CARGA Y RENDERIZADO DE TABLA
-// ==========================================
 async function loadEquipment() {
     const { data: equips, error } = await sb
         .from('equipment')
-        .select('*')
+        .select('*, institutions(name)')
         .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error("Error cargando inventario:", error);
-        return;
-    }
+    if (error) return console.error("Error:", error);
     renderTable(equips);
 }
 
 function renderTable(data) {
     const tbody = document.getElementById('equipTable');
-    
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#94a3b8;">Inventario vacío. Use "Carga Masiva" para empezar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:40px; color:#94a3b8;">Sin equipos. Use "Carga Masiva".</td></tr>';
         return;
     }
 
     tbody.innerHTML = data.map(eq => `
         <tr>
             <td>
-                <div style="font-weight:700;">${eq.brand}</div>
-                <div style="font-size:12px; color:#64748b;">${eq.model}</div>
+                <div style="font-weight:700; color:#1e293b;">${eq.brand} ${eq.model}</div>
+                <div style="font-size:11px; color:#64748b;">Agregado: ${new Date(eq.created_at).toLocaleDateString()}</div>
             </td>
-            <td style="font-family:monospace; font-weight:600;">${eq.serial}</td>
-            <td><span class="badge-ip">${eq.ip_address || '---'}</span></td>
-            <td>${eq.physical_location || '---'}</td>
-            <td style="font-size:11px;">${eq.location_details || '---'}</td>
-            <td><span class="status-pill">Activo</span></td>
-            <td style="text-align:right;">
-                <button onclick="deleteEquip('${eq.id}')" style="background:none; border:none; color:#cbd5e1; cursor:pointer;"><i class="fas fa-trash"></i></button>
+            <td>
+                <span class="id-badge">${eq.serial}</span>
+                <div style="font-size:12px; color:#3b82f6; margin-top:4px;"><i class="fas fa-network-wired"></i> ${eq.ip_address || 'Sin IP'}</div>
+            </td>
+            <td>
+                <div style="font-weight:600;">${eq.institutions?.name || 'No asignado'}</div>
+                <div style="font-size:12px; color:#64748b;">${eq.physical_location || ''} - ${eq.location_details || ''}</div>
+            </td>
+            <td><span style="background:#dcfce7; color:#166534; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700;">ACTIVO</span></td>
+            <td>
+                <button onclick="deleteEquip('${eq.id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:16px;">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
             </td>
         </tr>
     `).join('');
 }
 
-// ==========================================
-// 3. IMPORTACIÓN MASIVA (CSV)
-// ==========================================
-
-// FUNCIÓN PARA GENERAR PLANTILLA OFICIAL
-window.downloadCSVTemplate = () => {
-    // Encabezados según el prompt maestro y el mapeo de Supabase
-    const headers = ["Ubicacion_Macro", "Modelo", "Marca", "Serie", "IP_Address", "Ubicacion_Detalle", "ID_Institucion_UUID"];
-    const example = ["PLANTA BAJA", "IM C400", "RICOH", "SERIE_EJEMPLO", "192.168.1.10", "OFICINA 1", "pegar-aqui-uuid-del-cliente"];
-    
-    const csvContent = headers.join(",") + "\n" + example.join(",");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    
-    link.setAttribute("href", url);
-    link.setAttribute("download", "Plantilla_Inventario_Impriartex.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
-// FUNCIÓN PARA PROCESAR EL ARCHIVO SUBIDO
 async function processCSV(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -79,14 +59,12 @@ async function processCSV(event) {
     const reader = new FileReader();
     reader.onload = async (e) => {
         const text = e.target.result;
-        const rows = text.split('\n').slice(1); // Omitimos la cabecera
-        
-        let success = 0;
-        let fail = 0;
+        const rows = text.split('\n').slice(1);
+        let success = 0; let fail = 0;
 
         for (let row of rows) {
             const col = row.split(',');
-            if (col.length < 7) continue; // Fila incompleta
+            if (col.length < 7) continue;
 
             const { error } = await sb.from('equipment').insert([{
                 physical_location: col[0].trim(),
@@ -97,20 +75,14 @@ async function processCSV(event) {
                 location_details:  col[5].trim(),
                 institution_id:    col[6].trim()
             }]);
-
             if (error) fail++; else success++;
         }
-        
-        alert(`📊 Proceso Completado:\n✅ ${success} Equipos cargados\n❌ ${fail} Errores`);
+        alert(`📊 Carga Masiva:\n✅ ${success} Éxitos\n❌ ${fail} Errores`);
         loadEquipment();
     };
     reader.readAsText(file);
-    event.target.value = ''; // Reset input
 }
 
-// ==========================================
-// 4. UTILIDADES
-// ==========================================
 function filterTable() {
     const term = document.getElementById('searchInput').value.toLowerCase();
     const rows = document.querySelectorAll('#equipTable tr');
@@ -125,23 +97,3 @@ async function deleteEquip(id) {
         loadEquipment();
     }
 }
-async function loadIdReferences() {
-    const { data: insts } = await sb.from('institutions').select('id, name').order('name');
-    const container = document.getElementById('idReferenceList');
-    
-    container.innerHTML = insts.map(i => `
-        <div style="background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
-            <div style="font-size:11px; font-weight:800; color:var(--primary);">${i.name}</div>
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-top:5px;">
-                <code style="font-size:9px; color:#64748b;">${i.id.substring(0,8)}...</code>
-                <button onclick="copyToClipboard('${i.id}')" style="border:none; background:none; cursor:pointer; color:var(--accent); font-size:11px;">Copiar</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Llama a esta función dentro del DOMContentLoaded
-document.addEventListener('DOMContentLoaded', () => {
-    loadEquipment();
-    loadIdReferences(); // <--- Inyectamos la referencia
-});
