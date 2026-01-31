@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario | Impriartex</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #0f172a; --accent: #3b82f6; --bg: #f1f5f9; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; display: flex; }
+        .main { flex: 1; padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* Toolbar de Importación */
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
+        .search-box { flex: 1; position: relative; }
+        .search-box input { width: 100%; padding: 10px 15px 10px 35px; border: 1px solid #cbd5e1; border-radius: 8px; }
+        .search-box i { position: absolute; left: 12px; top: 12px; color: #94a3b8; }
+
+        .btn-csv { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        #csvInput { display: none; }
+
+        /* Tabla de Inventario */
+        .table-container { background: white; border-radius: 12px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        th { text-align: left; padding: 15px; background: #f8fafc; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+        .badge-ip { font-family: monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; color: #475569; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="toolbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Buscar por Serie, Modelo o Cliente..." onkeyup="filterEquipment()">
+            </div>
+            
+            <label for="csvInput" class="btn-csv">
+                <i class="fas fa-file-csv"></i> Importar Inventario (CSV)
+            </label>
+            <input type="file" id="csvInput" accept=".csv" onchange="handleCSV(event)">
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Marca / Modelo</th>
+                        <th>Serie</th>
+                        <th>IP</th>
+                        <th>Institución (ID)</th>
+                        <th>Ubicación Macro</th>
+                        <th>Detalle Ubicación</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="equipTable">
+                    <tr><td colspan="7" style="text-align:center; padding:40px; color:#94a3b8;">Cargando inventario de Impriartex...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/security.js"></script>
+    <script src="js/equipment.js"></script>
+</body>
+</html>
