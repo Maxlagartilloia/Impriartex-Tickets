@@ -38,37 +38,37 @@ async function loadTechnicians() {
 async function loadInstitutions() {
     const { data: insts, error } = await sb
         .from('institutions')
-        .select(`
-            *,
-            technician:profiles!institutions_technician_id_fkey(full_name)
-        `)
+        .select(`*, technician:profiles!institutions_technician_id_fkey(full_name)`)
         .order('name');
 
     const tbody = document.getElementById('instTable');
     
-    if (insts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8;">No hay clientes registrados.</td></tr>';
-        return;
-    }
-
     tbody.innerHTML = insts.map(i => `
         <tr>
-            <td><strong>${i.name}</strong><br><small style="color:#94a3b8;">ID: ${i.id}</small></td>
-            <td>${i.address || 'Sin dirección'}</td>
             <td>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <i class="fas fa-user-check" style="color:var(--accent);"></i>
-                    <span>${i.technician?.full_name || 'PENDIENTE'}</span>
+                <div style="font-weight:700;">${i.name}</div>
+                <div style="display:flex; align-items:center; gap:5px; margin-top:5px;">
+                    <code style="font-size:10px; background:#f1f5f9; padding:2px 5px; border-radius:4px; color:#64748b;">${i.id}</code>
+                    <button onclick="copyToClipboard('${i.id}')" style="border:none; background:none; cursor:pointer; color:var(--accent); font-size:12px;" title="Copiar ID para CSV">
+                        <i class="fas fa-copy"></i>
+                    </button>
                 </div>
             </td>
+            <td>${i.address || '---'}</td>
+            <td><i class="fas fa-user-wrench" style="color:var(--accent);"></i> ${i.technician?.full_name || 'Sin asignar'}</td>
             <td style="text-align:right;">
-                <button onclick="deleteInst('${i.id}')" style="background:none; border:none; color:var(--danger); cursor:pointer;">
-                    <i class="fas fa-trash-alt"></i>
-                </button>
+                <button onclick="deleteInst('${i.id}')" style="background:none; border:none; color:#cbd5e1; cursor:pointer;"><i class="fas fa-trash"></i></button>
             </td>
         </tr>
     `).join('');
 }
+
+// Utilidad para copiar al portapapeles
+window.copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("ID Copiado: " + text + "\nYa puedes pegarlo en tu archivo Excel.");
+    });
+};
 
 // ==========================================
 // 3. ACCIONES (GUARDAR Y ELIMINAR)
