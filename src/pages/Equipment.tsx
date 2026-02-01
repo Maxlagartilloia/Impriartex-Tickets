@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Printer, Upload, FileSpreadsheet, Search, 
-  Database, Loader2, Trash2 
+  Database, Loader2, Trash2, Edit3, X, ArrowLeftRight, Trash
 } from 'lucide-react';
 
 export default function EquipmentPage() {
@@ -12,6 +12,8 @@ export default function EquipmentPage() {
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedItem, setSelectedItem] = useState<any>(null); // Para el modal de edición
+  const [showEditModal, setShowEditModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -23,7 +25,8 @@ export default function EquipmentPage() {
     setLoading(true);
     const { data: eqData } = await supabase
       .from('equipment')
-      .select('*, institution:institutions(name)');
+      .select('*, institution:institutions(name)')
+      .order('created_at', { ascending: false });
     
     const { data: instData } = await supabase
       .from('institutions')
@@ -32,6 +35,28 @@ export default function EquipmentPage() {
     if (eqData) setEquipment(eqData);
     if (instData) setInstitutions(instData);
     setLoading(false);
+  };
+
+  // Función para actualizar estado o ubicación (MOVER EQUIPO)
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase
+      .from('equipment')
+      .update({
+        status: selectedItem.status,
+        institution_id: selectedItem.institution_id,
+        ubicacion_macro: selectedItem.ubicacion_macro,
+        ubicacion_detalle: selectedItem.ubicacion_detalle
+      })
+      .eq('id', selectedItem.id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Actualizado", description: "Movimiento de inventario registrado.", variant: "success" });
+      setShowEditModal(false);
+      fetchData();
+    }
   };
 
   const downloadCSVTemplate = () => {
@@ -48,12 +73,10 @@ export default function EquipmentPage() {
   const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = async (event) => {
       const text = event.target?.result as string;
       const lines = text.split('\n');
-      
       const records = lines.slice(1).filter(line => line.trim()).map(line => {
         const values = line.split(',');
         return {
@@ -69,12 +92,10 @@ export default function EquipmentPage() {
           status: values[7]?.trim() || 'operativo'
         };
       });
-
       const { error } = await supabase.from('equipment').insert(records);
-      if (error) {
-        toast({ title: "Error en carga", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Carga Exitosa", description: `${records.length} equipos importados correctamente.`, variant: "success" });
+      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      else {
+        toast({ title: "Carga Exitosa", description: `${records.length} equipos importados.` });
         fetchData();
       }
     };
@@ -88,76 +109,83 @@ export default function EquipmentPage() {
   );
 
   return (
-    <MainLayout title="Gestión de Inventario Tecnológico">
-      {/* HEADER CON BOTONES AMARILLOS */}
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h2 className="text-slate-500 font-bold uppercase text-xs tracking-widest text-[#0056b3]">Listado de Equipos</h2>
+    <MainLayout title="Gestión de Activos e Inventario">
+      {/* HEADER DE ACCIONES */}
+      <header className="flex flex-col sm:flex-row justify-between items-end gap-4 mb-8">
+        <div>
+          <h2 className="text-[#0056b3] font-black uppercase text-xl tracking-tighter italic">Consola de Inventario</h2>
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Control total de stock y ubicación de equipos</p>
+        </div>
         <div className="flex gap-3">
-          <button onClick={downloadCSVTemplate} className="bg-slate-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 font-bold text-xs hover:bg-slate-700 transition-all">
-            <FileSpreadsheet size={18} /> DESCARGAR PLANTILLA
+          <button onClick={downloadCSVTemplate} className="bg-slate-800 text-white px-5 py-3 rounded-2xl flex items-center gap-2 font-bold text-[10px] hover:bg-slate-700 transition-all uppercase tracking-widest">
+            <FileSpreadsheet size={16} /> Plantilla
           </button>
-          <button onClick={() => fileInputRef.current?.click()} className="bg-[#facc15] text-[#0056b3] px-4 py-2 rounded-xl flex items-center gap-2 font-black text-xs hover:bg-[#eab308] transition-all shadow-lg shadow-yellow-500/20">
-            <Upload size={18} /> CARGA MASIVA CSV
+          <button onClick={() => fileInputRef.current?.click()} className="bg-[#facc15] text-[#0056b3] px-5 py-3 rounded-2xl flex items-center gap-2 font-black text-[10px] hover:bg-[#eab308] transition-all shadow-xl shadow-yellow-500/20 uppercase tracking-widest">
+            <Upload size={16} /> Carga Masiva
           </button>
           <input type="file" ref={fileInputRef} className="hidden" accept=".csv" onChange={handleCSVUpload} />
         </div>
       </header>
 
-      {/* BUSCADOR AZUL */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-8">
+      {/* BUSCADOR */}
+      <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-8">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#0056b3]" size={20} />
+          <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#0056b3]" size={20} />
           <input 
             type="text" 
-            placeholder="Filtrar por serie, modelo o institución..." 
-            className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border border-transparent focus:border-[#0056b3] focus:bg-white outline-none transition-all font-medium"
+            placeholder="Buscar por serie (S/N), modelo o empresa..." 
+            className="w-full pl-14 pr-6 py-5 rounded-[1.5rem] bg-slate-50 border-none outline-none font-bold text-xs"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
 
-      {/* TABLA CORPORATIVA */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden mb-8">
+      {/* TABLA DE EQUIPOS */}
+      <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#0056b3] text-white">
-                <th className="p-4 font-bold text-xs uppercase tracking-wider">Marca y Modelo</th>
-                <th className="p-4 font-bold text-xs uppercase tracking-wider">Serie / IP</th>
-                <th className="p-4 font-bold text-xs uppercase tracking-wider">Ubicación / Cliente</th>
-                <th className="p-4 font-bold text-xs uppercase tracking-wider text-center">Estado</th>
-                <th className="p-4 font-bold text-xs uppercase tracking-wider text-center">Acción</th>
+                <th className="p-6 font-black text-[10px] uppercase tracking-widest">Activo / Marca</th>
+                <th className="p-6 font-black text-[10px] uppercase tracking-widest">Serie e IP</th>
+                <th className="p-6 font-black text-[10px] uppercase tracking-widest">Asignación Actual</th>
+                <th className="p-6 font-black text-[10px] uppercase tracking-widest text-center">Estado</th>
+                <th className="p-6 font-black text-[10px] uppercase tracking-widest text-center">Gestión</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr><td colSpan={5} className="text-center py-20"><Loader2 className="animate-spin mx-auto text-[#0056b3]" size={32} /></td></tr>
-              ) : filtered.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-10 text-slate-400 font-medium">No se encontraron equipos.</td></tr>
               ) : (
                 filtered.map(item => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="p-4">
-                      <div className="font-black text-[#0056b3] uppercase">{item.name}</div>
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="p-6">
+                      <div className="font-black text-[#0056b3] uppercase text-xs">{item.name}</div>
                       <div className="text-[10px] font-bold text-slate-400">{item.marca}</div>
                     </td>
-                    <td className="p-4">
-                      <div className="font-mono text-xs font-bold bg-slate-100 px-2 py-1 rounded inline-block text-slate-700">{item.serial_number}</div>
-                      <div className="text-[10px] text-slate-400 mt-1">{item.ip_address || 'Sin IP asignada'}</div>
+                    <td className="p-6">
+                      <div className="font-mono text-[10px] font-black bg-blue-50 text-[#0056b3] px-2 py-1 rounded-lg inline-block uppercase tracking-tighter">{item.serial_number}</div>
+                      <div className="text-[10px] text-slate-400 mt-1">{item.ip_address || 'Sin IP'}</div>
                     </td>
-                    <td className="p-4">
-                      <div className="font-bold text-slate-700">{item.institution?.name || 'STOCK CENTRAL'}</div>
-                      <div className="text-[10px] text-slate-400 uppercase">{item.ubicacion_macro}</div>
+                    <td className="p-6">
+                      <div className="font-black text-slate-700 text-[11px] uppercase">{item.institution?.name || 'STOCK CENTRAL'}</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">{item.ubicacion_macro}</div>
                     </td>
-                    <td className="p-4 text-center">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter ${item.status === 'operativo' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <td className="p-6 text-center">
+                      <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        item.status === 'operativo' ? 'bg-emerald-100 text-emerald-700' : 
+                        item.status === 'chatarra' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
                         {item.status}
                       </span>
                     </td>
-                    <td className="p-4 text-center">
-                      <button className="p-2 text-red-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                        <Trash2 size={18} />
+                    <td className="p-6 text-center">
+                      <button 
+                        onClick={() => { setSelectedItem(item); setShowEditModal(true); }}
+                        className="p-3 bg-slate-100 text-slate-400 rounded-2xl hover:bg-[#0056b3] hover:text-white transition-all shadow-sm"
+                      >
+                        <Edit3 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -168,23 +196,87 @@ export default function EquipmentPage() {
         </div>
       </div>
 
-      {/* REFERENCIA DE IDS PARA EL CSV */}
-      <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden">
+      {/* MODAL DE GESTIÓN DE EQUIPO (MOVER / BAJA) */}
+      {showEditModal && selectedItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
+          <div className="bg-white max-w-lg w-full p-10 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 border border-slate-100">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-xl font-black text-[#0056b3] uppercase tracking-tighter italic flex items-center gap-2">
+                <ArrowLeftRight size={24} className="text-[#facc15]" /> Mover / Editar Activo
+              </h3>
+              <button onClick={() => setShowEditModal(false)} className="text-slate-300 hover:text-red-500 transition-colors"><X size={28} /></button>
+            </div>
+            
+            <form onSubmit={handleUpdate} className="space-y-6">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                <p className="text-[9px] font-black text-slate-400 uppercase mb-1 tracking-widest">Equipo Seleccionado</p>
+                <p className="font-black text-[#0056b3] uppercase text-sm">{selectedItem.name} ({selectedItem.serial_number})</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Asignar a Empresa</label>
+                  <select 
+                    className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs cursor-pointer"
+                    value={selectedItem.institution_id || ''}
+                    onChange={e => setSelectedItem({...selectedItem, institution_id: e.target.value})}
+                  >
+                    <option value="">STOCK CENTRAL</option>
+                    {institutions.map(inst => (
+                      <option key={inst.id} value={inst.id}>{inst.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado Operativo</label>
+                  <select 
+                    className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs cursor-pointer"
+                    value={selectedItem.status}
+                    onChange={e => setSelectedItem({...selectedItem, status: e.target.value})}
+                  >
+                    <option value="operativo">OPERATIVO</option>
+                    <option value="almacen">EN ALMACÉN</option>
+                    <option value="chatarra">DE BAJA / CHATARRA</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ubicación Macro (Edificio)</label>
+                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs" value={selectedItem.ubicacion_macro || ''} onChange={e => setSelectedItem({...selectedItem, ubicacion_macro: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalle (Dpto/Oficina)</label>
+                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs" value={selectedItem.ubicacion_detalle || ''} onChange={e => setSelectedItem({...selectedItem, ubicacion_detalle: e.target.value})} />
+                </div>
+              </div>
+
+              <button type="submit" className="w-full bg-[#0056b3] text-white font-black py-5 rounded-2xl shadow-xl shadow-blue-500/20 hover:bg-[#004494] transition-all mt-4 uppercase tracking-[0.2em] text-xs">
+                PROCESAR CAMBIO DE INVENTARIO
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* FOOTER DE IDS */}
+      <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">
         <div className="relative z-10">
-          <h3 className="font-black flex items-center gap-2 mb-2 text-[#facc15] uppercase tracking-tight">
-            <Database size={20} /> Guía de IDs para Carga Masiva
+          <h3 className="font-black flex items-center gap-2 mb-2 text-[#facc15] uppercase tracking-tight italic">
+            <Database size={20} /> Directorio de IDs para Carga Masiva
           </h3>
-          <p className="text-slate-400 text-xs mb-6">Copia estos códigos en la columna <strong className="text-white">institution_id</strong> de tu archivo CSV para asignar equipos a cada cliente.</p>
+          <p className="text-slate-400 text-[10px] mb-8 font-bold uppercase tracking-widest">Utiliza estos códigos en tu CSV para asignar equipos a cada cliente</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {institutions.map(inst => (
-              <div key={inst.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all">
-                <span className="font-black text-[10px] uppercase block mb-1 text-slate-300">{inst.name}</span>
+              <div key={inst.id} className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-all group">
+                <span className="font-black text-[9px] uppercase block mb-1 text-slate-400 group-hover:text-[#facc15] transition-colors">{inst.name}</span>
                 <code className="text-[10px] text-[#facc15] font-mono select-all">{inst.id}</code>
               </div>
             ))}
           </div>
         </div>
-        <Printer size={150} className="absolute -right-10 -bottom-10 text-white/5 rotate-12" />
+        <Printer size={200} className="absolute -right-10 -bottom-10 text-white/5 rotate-12" />
       </div>
     </MainLayout>
   );
