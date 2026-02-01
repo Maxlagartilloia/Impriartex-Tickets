@@ -23,13 +23,15 @@ export default function DashboardPage() {
     setLoading(true);
     
     // 1. OBTENER ESTADÍSTICAS DE TICKETS
-    let ticketQuery = supabase.from('tickets').select('status, arrival_at, created_at');
+    // Cambiamos a la lógica de tus columnas: 'status'
+    let ticketQuery = supabase.from('tickets').select('status');
     if (role === 'client') ticketQuery = ticketQuery.eq('client_id', user.id);
     else if (role === 'technician') ticketQuery = ticketQuery.eq('technician_id', user.id);
 
     const { data: tickets } = await ticketQuery;
     
     // 2. OBTENER ESTADÍSTICAS DE INVENTARIO (REAL)
+    // Sincronizado con tu tabla 'equipment'
     const { data: equip } = await supabase.from('equipment').select('status');
 
     if (tickets) {
@@ -39,7 +41,7 @@ export default function DashboardPage() {
         completed: tickets.filter(t => t.status === 'completed').length
       });
 
-      // LÓGICA DE CALIDAD: % de tickets atendidos
+      // LÓGICA DE CALIDAD: % de tickets completados
       const total = tickets.length;
       const done = tickets.filter(t => t.status === 'completed').length;
       setQualityScore(total > 0 ? Math.round((done / total) * 100) : 0);
@@ -62,10 +64,10 @@ export default function DashboardPage() {
       {/* SECCIÓN 1: BIENVENIDA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
         <div>
-          <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic">
+          <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tighter italic leading-none">
             Hola, {user?.email?.split('@')[0]}
           </h2>
-          <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest">
+          <p className="text-slate-500 font-bold text-[10px] uppercase tracking-widest mt-1">
             {role === 'supervisor' ? 'Control Global de Impriartex' : 'Estado de tu infraestructura tecnológica'}
           </p>
         </div>
@@ -109,7 +111,6 @@ export default function DashboardPage() {
 
       {/* SECCIÓN 3: CALIDAD SLA E INVENTARIO */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* GRÁFICO DE CALIDAD */}
         <div className="bg-slate-900 p-8 rounded-[2.5rem] shadow-xl text-white">
           <h4 className="font-black text-[#facc15] uppercase text-xs tracking-widest mb-8 flex items-center gap-2">
             <Zap size={16} /> Índice de Calidad Real (SLA)
@@ -124,27 +125,26 @@ export default function DashboardPage() {
                 <span className="absolute text-xl font-black italic">{qualityScore}%</span>
              </div>
              <div>
-                <p className="font-black uppercase text-xs mb-1">Efectividad de Servicio</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Basado en tickets resueltos vs reportados</p>
+                <p className="font-black uppercase text-sm mb-1 italic tracking-tighter text-[#facc15]">Efectividad de Servicio</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-tight">Basado en tickets resueltos vs reportados en tiempo real.</p>
              </div>
           </div>
         </div>
 
-        {/* ESTADO DEL INVENTARIO REAL */}
         <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
           <h4 className="font-black text-[#0056b3] uppercase text-xs tracking-widest mb-6 flex items-center gap-2">
             <Printer size={16} /> Monitoreo de Inventario
           </h4>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group hover:bg-[#0056b3]/5 transition-colors">
               <span className="text-xs font-black uppercase text-slate-600 italic">Equipos Operativos</span>
               <span className="bg-emerald-100 text-emerald-700 px-4 py-1 rounded-full text-[10px] font-black">{invStats.operational}</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl">
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl group hover:bg-[#0056b3]/5 transition-colors">
               <span className="text-xs font-black uppercase text-slate-600 italic">En Almacén</span>
               <span className="bg-blue-100 text-[#0056b3] px-4 py-1 rounded-full text-[10px] font-black">{invStats.storage}</span>
             </div>
-            <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl">
+            <div className="flex items-center justify-between p-4 bg-red-50 rounded-2xl group hover:bg-red-100/50 transition-colors">
               <span className="text-xs font-black uppercase text-red-600 italic">Baja / Chatarra</span>
               <span className="bg-red-500 text-white px-4 py-1 rounded-full text-[10px] font-black">{invStats.scrap}</span>
             </div>
@@ -152,12 +152,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* MODAL PARA CLIENTE: CREAR TICKET (Lógica completa) */}
+      {/* MODAL PARA CLIENTE: CREAR TICKET */}
       {showTicketModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
-          <div className="bg-white max-w-lg w-full p-10 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95">
+          <div className="bg-white max-w-lg w-full p-10 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 border border-slate-100">
             <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-black text-[#0056b3] uppercase tracking-tighter italic">Reportar Falla Técnica</h3>
+              <h3 className="text-xl font-black text-[#0056b3] uppercase tracking-tighter italic leading-none">Reportar Falla Técnica</h3>
               <button onClick={() => setShowTicketModal(false)} className="text-slate-300 hover:text-red-500 transition-colors"><X size={28} /></button>
             </div>
             
@@ -175,7 +175,7 @@ export default function DashboardPage() {
 
               <div>
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descripción del Problema</label>
-                <textarea className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs h-32" placeholder="Explique qué sucede con el equipo..."></textarea>
+                <textarea className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs h-32 resize-none" placeholder="Explique qué sucede con el equipo..."></textarea>
               </div>
 
               <div className="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-slate-200 text-center group hover:border-[#0056b3] transition-all cursor-pointer">
