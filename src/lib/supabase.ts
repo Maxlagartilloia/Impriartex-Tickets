@@ -1,12 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Intentamos obtener las variables desde el entorno (Netlify/Vite)
-// Si no existen (desarrollo local), usa los strings que pongas aquí.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://tu-proyecto-id.supabase.co'; 
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'tu-clave-anon-publica-aqui';
+// En producción (Netlify), estas variables DEBEN estar en el panel de control
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || supabaseUrl === 'https://tu-proyecto-id.supabase.co') {
-  console.warn("⚠️ Supabase URL no configurada correctamente.");
+// Verificación de seguridad: Si faltan las llaves, avisamos en consola para saber qué pasa
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error(
+    "❌ ERROR: Faltan las variables de entorno de Supabase. " +
+    "Asegúrate de configurar VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en Netlify."
+  );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(
+  supabaseUrl || '', 
+  supabaseAnonKey || ''
+);
