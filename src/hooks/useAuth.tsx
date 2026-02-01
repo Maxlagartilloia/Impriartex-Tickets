@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Función interna para obtener el rol sin repetir código
+  // Función ultra-defensiva para obtener el rol
   const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -17,18 +17,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
-      return data?.role || null;
+      // Si hay error o no hay data, devolvemos 'client' para no bloquear la app
+      if (error || !data) {
+        console.warn("Perfil no encontrado o error de red. Asignando rol básico.");
+        return 'client'; 
+      }
+      return data.role;
     } catch (err) {
-      console.error("Error al obtener rol del perfil:", err);
-      return null;
+      console.error("Error crítico al obtener rol:", err);
+      return 'client'; 
     }
   };
 
   useEffect(() => {
-    // 1. Inicialización de choque
     const initializeAuth = async () => {
       setLoading(true);
+      // Timeout de seguridad: Si en 5 segundos no hay respuesta, soltamos la pantalla
+      const safetyTimer = setTimeout(() => {
+        if (loading) setLoading(false);
+      }, 5000);
+
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
@@ -36,20 +44,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(session.user);
           const userRole = await fetchUserRole(session.user.id);
           setRole(userRole);
+        } else {
+          setUser(null);
+          setRole(null);
         }
       } catch (error) {
-        console.error("Fallo crítico en inicialización Auth:", error);
+        console.error("Fallo en inicialización Auth:", error);
       } finally {
-        // Garantizamos que el estado de carga termine pase lo que pase
+        clearTimeout(safetyTimer);
         setLoading(false);
       }
     };
 
     initializeAuth();
 
-    // 2. Escucha activa de eventos (Login, Logout, Token Refreshed)
+    // Escucha de eventos de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`Evento Auth detectado: ${event}`);
+      console.log(`Evento Detectado: ${event}`);
       
       if (session?.user) {
         setUser(session.user);
@@ -60,8 +71,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(null);
       }
       
-      // Si el evento es un cierre de sesión, forzamos el fin del loading
-      if (event === 'SIGNED_OUT') {
+      // Aseguramos que SIGNED_IN o SIGNED_OUT quiten el loading
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
         setLoading(false);
       }
     });
