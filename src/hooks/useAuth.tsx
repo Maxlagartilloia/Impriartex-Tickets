@@ -8,7 +8,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Función ultra-defensiva para obtener el rol
   const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
@@ -17,9 +16,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', userId)
         .single();
 
-      // Si hay error o no hay data, devolvemos 'client' para no bloquear la app
       if (error || !data) {
-        console.warn("Perfil no encontrado o error de red. Asignando rol básico.");
+        console.warn("Perfil no encontrado. Rol asignado: client");
         return 'client'; 
       }
       return data.role;
@@ -32,14 +30,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       setLoading(true);
-      // Timeout de seguridad: Si en 5 segundos no hay respuesta, soltamos la pantalla
       const safetyTimer = setTimeout(() => {
-        if (loading) setLoading(false);
+        setLoading(false);
       }, 5000);
 
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (session?.user) {
           setUser(session.user);
           const userRole = await fetchUserRole(session.user.id);
@@ -58,10 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     initializeAuth();
 
-    // Escucha de eventos de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`Evento Detectado: ${event}`);
-      
       if (session?.user) {
         setUser(session.user);
         const userRole = await fetchUserRole(session.user.id);
@@ -71,7 +64,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(null);
       }
       
-      // Aseguramos que SIGNED_IN o SIGNED_OUT quiten el loading
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
         setLoading(false);
       }
