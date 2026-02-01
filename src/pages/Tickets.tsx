@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+// Eliminamos la línea de html2pdf que causaba el error de seguridad 'eval'
 import { 
   Ticket as TicketIcon, Wrench, X, Download, Loader2, 
   Timer, Settings2, Save, ClipboardList, Gauge 
@@ -59,7 +60,6 @@ export default function TicketsPage() {
     e.preventDefault();
     if (!selectedTicket) return;
 
-    // VALIDACIÓN ENTERPRISE: No permitir contadores en 0 para asegurar facturación precisa
     if (form.cntBW <= 0) {
       toast({ 
         title: "Dato Obligatorio", 
@@ -213,7 +213,6 @@ export default function TicketsPage() {
                 <input type="text" placeholder="Repuestos (Ej: Rodillo, Pickup, Web...)" className="w-full p-4 bg-white border border-blue-100 rounded-xl font-bold text-xs outline-none" onChange={e => setForm({...form, spare_parts: e.target.value})} />
               </div>
 
-              {/* SECCIÓN DE CONTADORES PARA FACTURACIÓN */}
               <div className="p-6 bg-slate-900 rounded-2xl text-white">
                 <p className="text-[10px] font-black text-[#facc15] uppercase tracking-widest mb-4 flex items-center gap-2"><Gauge size={14}/> Lectura de Contadores Finales</p>
                 <div className="grid grid-cols-2 gap-4">
