@@ -16,7 +16,7 @@ export default function ReportsPage() {
   const generatePDF = () => {
     toast({ 
       title: "Generando Reporte", 
-      description: "Se abrirá la ventana de impresión. Selecciona 'Guardar como PDF'." 
+      description: "Se abrirá la ventana de impresión. Selecciona 'Guardar como PDF' en destino." 
     });
     window.print();
   };
@@ -37,11 +37,7 @@ export default function ReportsPage() {
       if (error) throw error;
       setData(tickets || []);
     } catch (err: any) {
-      toast({ 
-        title: "Error de conexión", 
-        description: "No se pudieron obtener los datos para el reporte.", 
-        variant: "destructive" 
-      });
+      toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -53,7 +49,6 @@ export default function ReportsPage() {
 
   return (
     <MainLayout title="Generador de Reportes Ejecutivos">
-      {/* HEADER DE ACCIÓN */}
       <div className="flex justify-between items-center mb-10 no-print">
         <div>
           <h2 className="text-[#0056b3] font-black uppercase text-xl tracking-tighter italic leading-none">Centro de Reportes</h2>
@@ -67,10 +62,8 @@ export default function ReportsPage() {
         </button>
       </div>
 
-      {/* VISTA PREVIA DEL REPORTE */}
       <div id="report-content" className="bg-white p-12 rounded-[2.5rem] shadow-sm border border-slate-100 max-w-5xl mx-auto font-serif text-slate-800 print:m-0 print:p-0 print:border-none print:shadow-none">
         
-        {/* Encabezado PDF */}
         <div className="flex justify-between items-start border-b-4 border-[#0056b3] pb-8 mb-10">
           <div>
             <h1 className="text-4xl font-black text-[#0056b3] tracking-tighter leading-none">IMPRIARTEX</h1>
@@ -82,7 +75,6 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Resumen Ejecutivo */}
         <div className="grid grid-cols-3 gap-8 mb-12">
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center">
             <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Total Atenciones</p>
@@ -98,7 +90,6 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Tabla Detallada */}
         <div className="mb-12">
           <h3 className="text-xs font-black text-[#0056b3] uppercase border-b-2 border-slate-100 pb-2 mb-6 flex items-center gap-2">
             <ClipboardCheck size={16} /> Detalle Cronológico de Intervenciones
@@ -118,7 +109,7 @@ export default function ReportsPage() {
               {loading ? (
                 <tr><td colSpan={6} className="text-center py-10"><Loader2 className="animate-spin mx-auto text-[#0056b3]" /></td></tr>
               ) : data.length === 0 ? (
-                <tr><td colSpan={6} className="text-center py-10 text-slate-400 uppercase text-[10px]">Sin datos registrados</td></tr>
+                <tr><td colSpan={6} className="text-center py-10 text-slate-400">Sin datos registrados</td></tr>
               ) : (
                 data.map((ticket) => (
                   <tr key={ticket.id} className="text-slate-700">
@@ -142,7 +133,6 @@ export default function ReportsPage() {
           </table>
         </div>
 
-        {/* Firmas */}
         <div className="mt-24 flex justify-between gap-20">
           <div className="flex-1 border-t-2 border-slate-900 pt-4 text-center">
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-900">Criss Lombeida</p>
@@ -155,13 +145,11 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      {/* CSS para impresión limpia */}
       <style>{`
         @media print {
           .no-print { display: none !important; }
           body { background: white !important; }
-          .print\:m-0 { margin: 0 !important; }
-          .print\:p-0 { padding: 0 !important; }
+          .MainLayout_content_wrapper { padding: 0 !important; margin: 0 !important; }
         }
       `}</style>
     </MainLayout>
