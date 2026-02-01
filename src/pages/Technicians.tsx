@@ -17,9 +17,9 @@ export default function TechniciansPage() {
     full_name: '',
     email: '',
     phone: '',
-    specialty: 'Técnico General',
-    employee_id: '', // Código de acceso para el técnico
     role: 'technician'
+    // Nota: specialty y employee_id no existen en tu tabla profiles actual, 
+    // pero los manejaremos para que no rompan el flujo.
   });
 
   useEffect(() => {
@@ -28,6 +28,7 @@ export default function TechniciansPage() {
 
   const fetchTechnicians = async () => {
     setLoading(true);
+    // Cambiamos la lógica para que traiga exactamente lo que hay en tu tabla 'profiles'
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -45,18 +46,20 @@ export default function TechniciansPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Insertamos al técnico con su ID de empleado para el login
+    // Ajustamos el insert para que use SOLO las columnas que confirmamos en tu JSON
     const { error } = await supabase.from('profiles').insert([{
-      ...form,
-      status: 'active' // Por defecto entra como activo para recibir tickets
+      full_name: form.full_name,
+      email: form.email,
+      phone: form.phone,
+      role: 'technician'
     }]);
 
     if (error) {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Éxito', description: `Técnico ${form.full_name} habilitado con ID: ${form.employee_id}`, variant: 'success' });
+      toast({ title: 'Éxito', description: `Técnico ${form.full_name} habilitado correctamente`, variant: 'success' });
       setShowModal(false);
-      setForm({ full_name: '', email: '', phone: '', specialty: 'Técnico General', employee_id: '', role: 'technician' });
+      setForm({ full_name: '', email: '', phone: '', role: 'technician' });
       fetchTechnicians();
     }
   };
@@ -98,7 +101,7 @@ export default function TechniciansPage() {
                   <h3 className="font-black text-slate-800 uppercase tracking-tighter leading-none mb-2">{tech.full_name}</h3>
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] bg-[#facc15] text-[#0056b3] px-2 py-0.5 rounded-full font-black uppercase tracking-widest">
-                      {tech.specialty}
+                      Técnico Autorizado
                     </span>
                     <span className="flex items-center gap-1 text-[9px] font-black text-emerald-500 uppercase italic">
                       <Activity size={10} /> {tech.status || 'Activo'}
@@ -109,8 +112,8 @@ export default function TechniciansPage() {
               
               <div className="space-y-3 text-xs font-bold text-slate-500 mb-8 py-6 border-y border-slate-50 relative">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2"><Fingerprint size={14} className="text-[#0056b3]" /> ID EMPLEADO:</div>
-                  <code className="text-[#0056b3] bg-blue-50 px-2 py-1 rounded-lg uppercase">{tech.employee_id || 'S/N'}</code>
+                  <div className="flex items-center gap-2"><Fingerprint size={14} className="text-[#0056b3]" /> ID SISTEMA:</div>
+                  <code className="text-[#0056b3] bg-blue-50 px-2 py-1 rounded-lg uppercase">{tech.id.slice(0, 8)}</code>
                 </div>
                 <div className="flex items-center gap-2"><Mail size={14} className="text-[#0056b3]" /> {tech.email}</div>
                 <div className="flex items-center gap-2"><Phone size={14} className="text-[#0056b3]" /> {tech.phone || 'N/A'}</div>
@@ -126,7 +129,7 @@ export default function TechniciansPage() {
         )}
       </div>
 
-      {/* MODAL DE REGISTRO CON LÓGICA DE ACCESO */}
+      {/* MODAL DE REGISTRO AJUSTADO A TU DB */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
           <div className="bg-white max-w-md w-full p-10 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 border border-slate-100">
@@ -142,30 +145,14 @@ export default function TechniciansPage() {
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nombre y Apellido</label>
                 <input type="text" required className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-slate-700" placeholder="Nombre completo" onChange={e => setForm({...form, full_name: e.target.value})} />
               </div>
-
-              <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">ID Único de Empleado (Usuario)</label>
-                <input type="text" required className="w-full mt-1 px-4 py-4 rounded-2xl bg-blue-50 border-none outline-none font-black text-[#0056b3] uppercase" placeholder="TEC-001" onChange={e => setForm({...form, employee_id: e.target.value})} />
-              </div>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Especialidad</label>
-                  <select className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs cursor-pointer" onChange={e => setForm({...form, specialty: e.target.value})}>
-                    <option value="Técnico General">General</option>
-                    <option value="Soporte Impresoras">Impresoras</option>
-                    <option value="Redes">Redes</option>
-                    <option value="Copiadoras">Copiadoras</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono</label>
-                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-slate-700" placeholder="09..." onChange={e => setForm({...form, phone: e.target.value})} />
-                </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teléfono</label>
+                <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-slate-700" placeholder="09..." onChange={e => setForm({...form, phone: e.target.value})} />
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Laboral</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Correo Laboral (Email)</label>
                 <input type="email" required className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-slate-700" placeholder="tecnico@impriartex.com" onChange={e => setForm({...form, email: e.target.value})} />
               </div>
 
