@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
+// Eliminamos html2pdf para cumplir con la política de seguridad (CSP)
 import { 
   FileText, Download, Printer, PieChart, 
-  BarChart3, CalendarDays, Loader2, ClipboardCheck, Gauge 
+  BarChart3, CalendarDays, Loader2, ClipboardCheck 
 } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -12,7 +13,7 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // FUNCIÓN CORREGIDA: Usa el motor nativo para evitar bloqueos CSP
+  // FUNCIÓN CORREGIDA: Usa el motor nativo de impresión para máxima seguridad
   const generatePDF = () => {
     toast({ 
       title: "Generando Reporte", 
@@ -47,7 +48,7 @@ export default function ReportsPage() {
     fetchReportData();
   }, []);
 
-  // LÓGICA ENTERPRISE: Cálculos automáticos para el reporte
+  // LÓGICA ENTERPRISE: Cálculos automáticos de facturación y SLA
   const totalBN = data.reduce((acc, t) => acc + (t.counter_bn_final || 0), 0);
   const totalColor = data.reduce((acc, t) => acc + (t.counter_color_final || 0), 0);
   const slaReal = data.length > 0 
@@ -56,6 +57,7 @@ export default function ReportsPage() {
 
   return (
     <MainLayout title="Generador de Reportes Ejecutivos">
+      {/* HEADER DE ACCIÓN - No se imprime */}
       <div className="flex justify-between items-center mb-10 no-print">
         <div>
           <h2 className="text-[#0056b3] font-black uppercase text-xl tracking-tighter italic leading-none flex items-center gap-2">
@@ -71,9 +73,9 @@ export default function ReportsPage() {
         </button>
       </div>
 
+      {/* DOCUMENTO CERTIFICADO - Lo que el cliente ve en el PDF */}
       <div id="report-content" className="bg-white p-12 rounded-[3rem] shadow-sm border border-slate-100 max-w-5xl mx-auto font-serif text-slate-800 print:m-0 print:p-0 print:border-none print:shadow-none">
         
-        {/* Encabezado Corporativo */}
         <div className="flex justify-between items-start border-b-4 border-[#0056b3] pb-8 mb-10">
           <div>
             <h1 className="text-4xl font-black text-[#0056b3] tracking-tighter leading-none italic">IMPRIARTEX</h1>
