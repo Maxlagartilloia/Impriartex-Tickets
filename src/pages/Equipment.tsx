@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Printer, Upload, FileSpreadsheet, Search, 
-  Database, Loader2, Trash2, Edit3, X, ArrowLeftRight, Trash
+  Database, Loader2, Edit3, X, ArrowLeftRight
 } from 'lucide-react';
 
 export default function EquipmentPage() {
@@ -12,7 +12,7 @@ export default function EquipmentPage() {
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItem, setSelectedItem] = useState<any>(null); // Para el modal de edición
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -37,7 +37,6 @@ export default function EquipmentPage() {
     setLoading(false);
   };
 
-  // Función para actualizar estado o ubicación (MOVER EQUIPO)
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase
@@ -45,8 +44,8 @@ export default function EquipmentPage() {
       .update({
         status: selectedItem.status,
         institution_id: selectedItem.institution_id,
-        ubicacion_macro: selectedItem.ubicacion_macro,
-        ubicacion_detalle: selectedItem.ubicacion_detalle
+        physical_location: selectedItem.physical_location, // Corregido de ubicacion_macro
+        location_details: selectedItem.location_details    // Corregido de ubicacion_detalle
       })
       .eq('id', selectedItem.id);
 
@@ -60,8 +59,8 @@ export default function EquipmentPage() {
   };
 
   const downloadCSVTemplate = () => {
-    const headers = "marca,modelo,serie,ip_address,ubicacion_macro,ubicacion_detalle,institution_id,status\n";
-    const example = "Epson,L5190,X7Y8Z9,192.168.1.50,Oficina Central,Planta Baja,ID_AQUI,operativo";
+    const headers = "brand,model,serial,ip_address,physical_location,location_details,institution_id,status\n";
+    const example = "Ricoh,MP 301,ABC123456,192.168.1.50,Edificio Central,Sistemas,ID_AQUI,operativo";
     const blob = new Blob([headers + example], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -80,20 +79,18 @@ export default function EquipmentPage() {
       const records = lines.slice(1).filter(line => line.trim()).map(line => {
         const values = line.split(',');
         return {
-          marca: values[0]?.trim(),
-          modelo: values[1]?.trim(),
-          serie: values[2]?.trim(),
-          serial_number: values[2]?.trim(),
-          name: `${values[0]} ${values[1]}`, 
+          brand: values[0]?.trim(),             // brand
+          model: values[1]?.trim(),             // model
+          serial: values[2]?.trim(),            // serial
           ip_address: values[3]?.trim() || null,
-          ubicacion_macro: values[4]?.trim(),
-          ubicacion_detalle: values[5]?.trim() || null,
+          physical_location: values[4]?.trim(), // physical_location
+          location_details: values[5]?.trim() || null, // location_details
           institution_id: values[6]?.trim() || null,
           status: values[7]?.trim() || 'operativo'
         };
       });
       const { error } = await supabase.from('equipment').insert(records);
-      if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (error) toast({ title: "Error en carga", description: error.message, variant: "destructive" });
       else {
         toast({ title: "Carga Exitosa", description: `${records.length} equipos importados.` });
         fetchData();
@@ -103,14 +100,13 @@ export default function EquipmentPage() {
   };
 
   const filtered = equipment.filter(e => 
-    e.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.serial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.institution?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <MainLayout title="Gestión de Activos e Inventario">
-      {/* HEADER DE ACCIONES */}
       <header className="flex flex-col sm:flex-row justify-between items-end gap-4 mb-8">
         <div>
           <h2 className="text-[#0056b3] font-black uppercase text-xl tracking-tighter italic">Consola de Inventario</h2>
@@ -127,7 +123,6 @@ export default function EquipmentPage() {
         </div>
       </header>
 
-      {/* BUSCADOR */}
       <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 mb-8">
         <div className="relative">
           <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#0056b3]" size={20} />
@@ -141,13 +136,12 @@ export default function EquipmentPage() {
         </div>
       </div>
 
-      {/* TABLA DE EQUIPOS */}
       <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden mb-8">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-[#0056b3] text-white">
-                <th className="p-6 font-black text-[10px] uppercase tracking-widest">Activo / Marca</th>
+                <th className="p-6 font-black text-[10px] uppercase tracking-widest">Marca / Modelo</th>
                 <th className="p-6 font-black text-[10px] uppercase tracking-widest">Serie e IP</th>
                 <th className="p-6 font-black text-[10px] uppercase tracking-widest">Asignación Actual</th>
                 <th className="p-6 font-black text-[10px] uppercase tracking-widest text-center">Estado</th>
@@ -161,16 +155,16 @@ export default function EquipmentPage() {
                 filtered.map(item => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="p-6">
-                      <div className="font-black text-[#0056b3] uppercase text-xs">{item.name}</div>
-                      <div className="text-[10px] font-bold text-slate-400">{item.marca}</div>
+                      <div className="font-black text-[#0056b3] uppercase text-xs">{item.model}</div>
+                      <div className="text-[10px] font-bold text-slate-400">{item.brand}</div>
                     </td>
                     <td className="p-6">
-                      <div className="font-mono text-[10px] font-black bg-blue-50 text-[#0056b3] px-2 py-1 rounded-lg inline-block uppercase tracking-tighter">{item.serial_number}</div>
+                      <div className="font-mono text-[10px] font-black bg-blue-50 text-[#0056b3] px-2 py-1 rounded-lg inline-block uppercase tracking-tighter">{item.serial}</div>
                       <div className="text-[10px] text-slate-400 mt-1">{item.ip_address || 'Sin IP'}</div>
                     </td>
                     <td className="p-6">
                       <div className="font-black text-slate-700 text-[11px] uppercase">{item.institution?.name || 'STOCK CENTRAL'}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase">{item.ubicacion_macro}</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">{item.physical_location}</div>
                     </td>
                     <td className="p-6 text-center">
                       <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${
@@ -196,7 +190,6 @@ export default function EquipmentPage() {
         </div>
       </div>
 
-      {/* MODAL DE GESTIÓN DE EQUIPO (MOVER / BAJA) */}
       {showEditModal && selectedItem && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
           <div className="bg-white max-w-lg w-full p-10 rounded-[2.5rem] shadow-2xl animate-in zoom-in-95 border border-slate-100">
@@ -210,7 +203,7 @@ export default function EquipmentPage() {
             <form onSubmit={handleUpdate} className="space-y-6">
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
                 <p className="text-[9px] font-black text-slate-400 uppercase mb-1 tracking-widest">Equipo Seleccionado</p>
-                <p className="font-black text-[#0056b3] uppercase text-sm">{selectedItem.name} ({selectedItem.serial_number})</p>
+                <p className="font-black text-[#0056b3] uppercase text-sm">{selectedItem.model} ({selectedItem.serial})</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -243,12 +236,12 @@ export default function EquipmentPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ubicación Macro (Edificio)</label>
-                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs" value={selectedItem.ubicacion_macro || ''} onChange={e => setSelectedItem({...selectedItem, ubicacion_macro: e.target.value})} />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Ubicación (Edificio)</label>
+                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs" value={selectedItem.physical_location || ''} onChange={e => setSelectedItem({...selectedItem, physical_location: e.target.value})} />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Detalle (Dpto/Oficina)</label>
-                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs" value={selectedItem.ubicacion_detalle || ''} onChange={e => setSelectedItem({...selectedItem, ubicacion_detalle: e.target.value})} />
+                  <input type="text" className="w-full mt-1 px-4 py-4 rounded-2xl bg-slate-50 border-none outline-none font-bold text-xs" value={selectedItem.location_details || ''} onChange={e => setSelectedItem({...selectedItem, location_details: e.target.value})} />
                 </div>
               </div>
 
@@ -260,7 +253,6 @@ export default function EquipmentPage() {
         </div>
       )}
 
-      {/* FOOTER DE IDS */}
       <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">
         <div className="relative z-10">
           <h3 className="font-black flex items-center gap-2 mb-2 text-[#facc15] uppercase tracking-tight italic">
