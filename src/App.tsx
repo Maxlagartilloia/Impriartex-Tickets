@@ -1,43 +1,56 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./hooks/useAuth";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
-// 1. Importaciones de tus páginas
-import Dashboard from "./pages/Dashboard";
-import Tickets from "./pages/Tickets";
-import Equipment from "./pages/Equipment";
-import Institutions from "./pages/Institutions";
-import Technicians from "./pages/Technicians";
-import Reports from "./pages/Reports"; // <--- Esta es la nueva que agregamos
-import Login from "./pages/Login";
+const AuthContext = createContext<any>(undefined);
 
-const App = () => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setUser(session.user);
+          // Pedimos el rol pero NO bloqueamos si falla
+          const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+          setRole(data?.role || 'user');
+        }
+      } catch (error) {
+        console.error("Auth Init Error:", error);
+      } finally {
+        setLoading(false); // ESTO MATA LA BOLITA PASE LO QUE PASE
+      }
+    };
+
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setUser(session.user);
+        const { data } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        setRole(data?.role || 'user');
+      } else {
+        setUser(null);
+        setRole(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Ruta Pública: Login */}
-          <Route path="/login" element={<Login />} />
-          
-          {/* Redirección Inicial: Si entras a la raíz, te manda al dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
-          {/* Rutas Protegidas (Solo entran los que están logueados) */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/tickets" element={<ProtectedRoute><Tickets /></ProtectedRoute>} />
-          <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
-          
-          {/* Rutas Administrativas (Solo Supervisor) */}
-          <Route path="/institutions" element={<ProtectedRoute><Institutions /></ProtectedRoute>} />
-          <Route path="/technicians" element={<ProtectedRoute><Technicians /></ProtectedRoute>} />
-          <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-          
-          {/* Error 404: Cualquier otra ruta te regresa al login */}
-          <Route path="*" element={<Navigate to="/login" />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <AuthContext.Provider value={{ user, role, loading }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
-export default App;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) throw new Error('useAuth error');
+  return context;
+};
