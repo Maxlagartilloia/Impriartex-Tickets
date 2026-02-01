@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Ticket as TicketIcon, Wrench, X, Download, Loader2, 
-  Timer, Settings2, Save, ClipboardList 
+  Timer, Settings2, Save, ClipboardList, Gauge 
 } from 'lucide-react';
 
 export default function TicketsPage() {
@@ -59,6 +59,16 @@ export default function TicketsPage() {
     e.preventDefault();
     if (!selectedTicket) return;
 
+    // VALIDACIÓN ENTERPRISE: No permitir contadores en 0 para asegurar facturación precisa
+    if (form.cntBW <= 0) {
+      toast({ 
+        title: "Dato Obligatorio", 
+        description: "El contador B/N es necesario para el reporte de facturación.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
     const { error } = await supabase
       .from('tickets')
       .update({
@@ -71,13 +81,14 @@ export default function TicketsPage() {
         departure_time: form.departure_time ? new Date().toISOString().split('T')[0] + 'T' + form.departure_time + ':00Z' : null,
         counter_bn_final: form.cntBW,
         counter_color_final: form.cntColor,
+        closed_at: new Date().toISOString()
       })
       .eq('id', selectedTicket.id);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Servicio Finalizado", description: "Reporte guardado correctamente.", variant: "success" });
+      toast({ title: "Servicio Finalizado", description: "Reporte certificado y guardado correctamente.", variant: "success" });
       setShowAttendModal(false);
       fetchTickets();
     }
@@ -89,10 +100,7 @@ export default function TicketsPage() {
 
     toast({ title: "Preparando impresión", description: "Selecciona 'Guardar como PDF' en la ventana que aparecerá." });
 
-    // Guardar el contenido original para restaurarlo luego
     const originalContent = document.body.innerHTML;
-
-    // Cambiar el body por solo el ticket, imprimir y recargar
     document.body.innerHTML = printContent.innerHTML;
     window.print();
     window.location.reload(); 
@@ -128,7 +136,7 @@ export default function TicketsPage() {
               <tr className="bg-[#0056b3] text-white text-[10px] uppercase tracking-widest">
                 <th className="p-4">Fecha / Cliente</th>
                 <th className="p-4">Equipo / Falla</th>
-                <th className="p-4">Estado</th>
+                <th className="p-4 text-center">Estado</th>
                 <th className="p-4 text-center">Acción</th>
               </tr>
             </thead>
@@ -151,14 +159,14 @@ export default function TicketsPage() {
                     <td className="p-4 text-center">
                       <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter ${
                         ticket.status === 'open' ? 'bg-red-100 text-red-600' : 
-                        ticket.status === 'completed' ? 'bg-blue-100 text-[#0056b3]' : 'bg-amber-100 text-amber-700'
+                        ticket.status === 'completed' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-700'
                       }`}>
                         {ticket.status === 'open' ? 'Abierto' : ticket.status === 'completed' ? 'Cerrado' : 'Proceso'}
                       </span>
                     </td>
                     <td className="p-4 text-center">
                         {ticket.status !== 'completed' && role !== 'client' ? (
-                          <button onClick={() => { setSelectedTicket(ticket); setShowAttendModal(true); }} className="p-2 bg-[#facc15] text-[#0056b3] rounded-xl hover:scale-110 transition-transform"><Wrench size={18} /></button>
+                          <button onClick={() => { setSelectedTicket(ticket); setShowAttendModal(true); }} className="p-2 bg-[#facc15] text-[#0056b3] rounded-xl hover:scale-110 transition-transform shadow-lg shadow-yellow-500/20"><Wrench size={18} /></button>
                         ) : (
                           <button onClick={() => exportPDF(ticket)} className="p-2 bg-[#0056b3] text-white rounded-xl hover:scale-110 transition-transform"><Download size={18} /></button>
                         )}
@@ -176,7 +184,7 @@ export default function TicketsPage() {
           <div className="bg-white max-w-2xl w-full p-8 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-black text-[#0056b3] uppercase italic flex items-center gap-2">
-                <Settings2 size={24} className="text-[#facc15]" /> Cerrar Reporte Técnico
+                <Settings2 size={24} className="text-[#facc15]" /> Certificar Reporte Técnico
               </h3>
               <button onClick={() => setShowAttendModal(false)} className="text-slate-400 hover:text-red-500"><X size={28} /></button>
             </div>
@@ -184,34 +192,38 @@ export default function TicketsPage() {
             <form onSubmit={handleCloseTicket} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 p-4 rounded-2xl border">
-                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Hora Llegada</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-2"><Timer size={12} className="inline mr-1"/> Hora Llegada</label>
                   <input type="time" required className="bg-transparent font-black text-[#0056b3] w-full outline-none" onChange={e => setForm({...form, arrival_time: e.target.value})} />
                 </div>
                 <div className="bg-slate-50 p-4 rounded-2xl border">
-                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Hora Salida</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase block mb-2"><Timer size={12} className="inline mr-1"/> Hora Salida</label>
                   <input type="time" required className="bg-transparent font-black text-[#0056b3] w-full outline-none" onChange={e => setForm({...form, departure_time: e.target.value})} />
                 </div>
               </div>
 
-              <textarea placeholder="Diagnóstico..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24 outline-none border-none" required onChange={e => setForm({...form, diagnosis: e.target.value})} />
-              <textarea placeholder="Solución..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24 outline-none border-none" required onChange={e => setForm({...form, solution: e.target.value})} />
+              <textarea placeholder="Diagnóstico técnico del fallo..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24 outline-none border-none shadow-inner focus:bg-white transition-all" required onChange={e => setForm({...form, diagnosis: e.target.value})} />
+              <textarea placeholder="Trabajo realizado / Solución..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24 outline-none border-none shadow-inner focus:bg-white transition-all" required onChange={e => setForm({...form, solution: e.target.value})} />
 
               <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
-                <p className="text-[10px] font-black text-[#0056b3] uppercase mb-4 flex items-center gap-2"><ClipboardList size={14}/> Insumos</p>
+                <p className="text-[10px] font-black text-[#0056b3] uppercase mb-4 flex items-center gap-2"><ClipboardList size={14}/> Insumos y Repuestos</p>
                 <div className="flex items-center gap-4 mb-4">
                   <input type="checkbox" id="toner_rep" className="w-5 h-5 accent-[#0056b3]" onChange={e => setForm({...form, toner_status: e.target.checked ? 'Cambiado' : 'No cambiado'})} />
-                  <label htmlFor="toner_rep" className="text-xs font-black uppercase">¿Cambio de Tóner?</label>
+                  <label htmlFor="toner_rep" className="text-xs font-black uppercase text-slate-700">¿Cambio de Tóner?</label>
                 </div>
-                <input type="text" placeholder="Repuestos (Ej: Rodillo, Pickup...)" className="w-full p-4 bg-white border rounded-xl font-bold text-xs outline-none" onChange={e => setForm({...form, spare_parts: e.target.value})} />
+                <input type="text" placeholder="Repuestos (Ej: Rodillo, Pickup, Web...)" className="w-full p-4 bg-white border border-blue-100 rounded-xl font-bold text-xs outline-none" onChange={e => setForm({...form, spare_parts: e.target.value})} />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <input type="number" placeholder="Contador B/N" className="p-4 bg-slate-50 rounded-2xl font-black text-[#0056b3] outline-none" required onChange={e => setForm({...form, cntBW: parseInt(e.target.value)})} />
-                <input type="number" placeholder="Contador Color" className="p-4 bg-slate-50 rounded-2xl font-black text-[#0056b3] outline-none" required onChange={e => setForm({...form, cntColor: parseInt(e.target.value)})} />
+              {/* SECCIÓN DE CONTADORES PARA FACTURACIÓN */}
+              <div className="p-6 bg-slate-900 rounded-2xl text-white">
+                <p className="text-[10px] font-black text-[#facc15] uppercase tracking-widest mb-4 flex items-center gap-2"><Gauge size={14}/> Lectura de Contadores Finales</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <input type="number" placeholder="Contador B/N" className="p-4 bg-white/10 rounded-xl font-black text-[#facc15] outline-none border border-white/10 focus:border-[#facc15]" required onChange={e => setForm({...form, cntBW: parseInt(e.target.value)})} />
+                  <input type="number" placeholder="Contador Color" className="p-4 bg-white/10 rounded-xl font-black text-[#facc15] outline-none border border-white/10 focus:border-[#facc15]" required onChange={e => setForm({...form, cntColor: parseInt(e.target.value)})} />
+                </div>
               </div>
 
               <button type="submit" className="w-full bg-[#0056b3] text-white font-black py-5 rounded-2xl uppercase text-xs flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30 active:scale-95 transition-all">
-                <Save size={18} /> GUARDAR REPORTE FINAL
+                <Save size={18} /> Finalizar Servicio y Generar Reporte
               </button>
             </form>
           </div>
@@ -224,7 +236,7 @@ export default function TicketsPage() {
           <div key={`pdf-${t.id}`} id={`pdf-content-${t.id}`} className="p-10 bg-white font-serif text-slate-900" style={{ width: '210mm' }}>
               <div className="flex justify-between items-start border-b-4 border-[#0056b3] pb-6 mb-8">
                 <div><h1 className="text-3xl font-black text-[#0056b3]">IMPRIARTEX</h1><p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Soporte Técnico Especializado</p></div>
-                <div className="text-right"><p className="font-black text-xl italic uppercase">Reporte Técnico</p><p className="text-[10px] font-bold">Ticket: #{t.ticket_number}</p></div>
+                <div className="text-right"><p className="font-black text-xl italic uppercase">Reporte Técnico</p><p className="text-[10px] font-bold">Ticket: #{t.ticket_number || t.id.slice(0,8)}</p></div>
               </div>
               <div className="grid grid-cols-2 gap-12 mb-8 text-[11px] font-bold uppercase">
                 <div className="space-y-1"><p>Cliente: {t.institution?.name}</p><p>Ubicación: {t.physical_location || 'S/D'}</p></div>
@@ -233,7 +245,10 @@ export default function TicketsPage() {
               <div className="space-y-6">
                 <div className="p-4 bg-slate-50 rounded-xl border"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Diagnóstico</h4><p className="text-[12px]">{t.diagnosis}</p></div>
                 <div className="p-4 bg-slate-50 rounded-xl border"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Solución</h4><p className="text-[12px]">{t.solution}</p></div>
-                <div className="p-4 border border-blue-100 rounded-xl"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Insumos</h4><p className="text-[11px]">Tóner: {t.toner_status}</p><p className="text-[11px]">Piezas: {t.spare_parts || 'Ninguno'}</p></div>
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="p-4 border border-blue-100 rounded-xl"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Insumos</h4><p className="text-[11px]">Tóner: {t.toner_status}</p><p className="text-[11px]">Piezas: {t.spare_parts || 'Ninguno'}</p></div>
+                   <div className="p-4 border border-slate-200 rounded-xl"><h4 className="text-[10px] font-black text-slate-900 uppercase mb-2">Contadores</h4><p className="text-[11px]">B/N: {t.counter_bn_final}</p><p className="text-[11px]">Color: {t.counter_color_final}</p></div>
+                </div>
               </div>
               <div className="flex justify-between mt-32"><div className="text-center w-64 border-t-2 border-slate-900 pt-2 text-[10px] font-black uppercase">Firma Técnico</div><div className="text-center w-64 border-t-2 border-slate-900 pt-2 text-[10px] font-black uppercase">Firma Cliente</div></div>
           </div>
