@@ -2,55 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --background: 222 47% 11%;
-    --foreground: 213 31% 91%;
-    --primary: 210 40% 96%;
-    --card: 222 47% 11%;
-    --border: 217 33% 17%;
-    --accent: 210 40% 96%;
-  }
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  background-color: #F8F9FD;
 }
 
 body {
-  @apply bg-[#020617] text-slate-100;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.15) 0px, transparent 50%);
+  margin: 0;
+  display: flex;
+  place-content: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #F8F9FD;
+  color: #1B2559;
 }
 
-/* EFECTO 3D DE LOVABLE QUE QUERÍAS */
-.card-3d {
-  @apply bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Estilo para las tarjetas de KPI */
+.card-shadow {
+  box-shadow: 0px 18px 40px rgba(112, 144, 176, 0.12);
 }
 
-.card-3d:hover {
-  @apply border-white/20 -translate-y-1;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+/* Estilo de la tabla de auditoría */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-/* BOTÓN EMPRESARIAL */
-.btn-primary-3d {
-  @apply bg-white text-black font-bold py-3 px-6 rounded-2xl transition-all active:scale-95;
-  box-shadow: 0 4px 15px rgba(255,255,255,0.1);
+th {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 900;
+  color: #A3AED0;
 }
 
-/* INPUTS ESTILO ENTERPRISE */
-.input-enterprise {
-  @apply w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-white/30 transition-all text-white;
+/* Animación de carga para sincronización con Supabase */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
-/* TABLAS PROFESIONALES */
-.table-enterprise {
-  @apply w-full text-left border-collapse;
-}
-
-.table-enterprise th {
-  @apply p-4 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-white/5;
-}
-
-.table-enterprise td {
-  @apply p-4 border-b border-white/5 text-sm;
+.animate-pulse-soft {
+  animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
