@@ -1,114 +1,115 @@
 import { useEffect, useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
 import { 
-  Ticket as TicketIcon, 
-  Clock, 
-  CheckCircle, 
-  AlertCircle, 
-  TrendingUp,
-  Filter
+  Ticket, Users, Building2, 
+  AlertCircle, CheckCircle2, Clock 
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { role } = useAuth();
-  const [stats, setStats] = useState({ open: 0, process: 0, closed: 0, sla: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    open: 0,
+    process: 0,
+    completed: 0
+  });
   const [loading, setLoading] = useState(true);
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchStats();
   }, []);
 
-  const fetchDashboardData = async () => {
-    setLoading(true);
-    try {
-      let query = supabase.from('tickets').select('status, created_at, closed_at');
-
-      if (dateFrom) query = query.gte('created_at', dateFrom);
-      if (dateTo) query = query.lte('created_at', dateTo);
-
-      const { data: tickets, error } = await query;
-
-      if (error) throw error;
-
-      if (tickets) {
-        const open = tickets.filter(t => t.status === 'open').length;
-        const process = tickets.filter(t => t.status === 'in_progress').length;
-        const closed = tickets.filter(t => t.status === 'completed').length;
-        
-        // Cálculo de SLA (Cumplimiento) básico: Porcentaje de cerrados vs total
-        const sla = tickets.length > 0 ? Math.round((closed / tickets.length) * 100) : 0;
-
-        setStats({ open, process, closed, sla });
-      }
-    } catch (error) {
-      console.error("Error al cargar dashboard:", error);
-    } finally {
-      setLoading(false);
+  const fetchStats = async () => {
+    const { data: tickets } = await supabase.from('tickets').select('status');
+    
+    if (tickets) {
+      setStats({
+        total: tickets.length,
+        open: tickets.filter(t => t.status === 'open').length,
+        process: tickets.filter(t => t.status === 'in_progress').length,
+        completed: tickets.filter(t => t.status === 'completed').length,
+      });
     }
+    setLoading(false);
   };
 
-  const kpiCards = [
-    { label: 'Tickets Abiertos', value: stats.open, icon: AlertCircle, color: 'text-destructive', bg: 'bg-destructive/10' },
-    { label: 'En Proceso', value: stats.process, icon: Clock, color: 'text-warning', bg: 'bg-warning/10' },
-    { label: 'Finalizados', value: stats.closed, icon: CheckCircle, color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Cumplimiento', value: `${stats.sla}%`, icon: TrendingUp, color: 'text-primary', bg: 'bg-primary/10' },
-  ];
-
   return (
-    <MainLayout title="Dashboard de Control">
-      {/* Filtros de Fecha - Manteniendo el diseño de tu HTML */}
-      <div className="card-3d p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Desde</label>
-            <input 
-              type="date" 
-              className="input-enterprise" 
-              onChange={(e) => setDateFrom(e.target.value)}
-            />
+    <MainLayout title="Panel de Control Principal">
+      {/* SECCIÓN DE MÉTRICAS CORPORATIVAS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        {/* Total - Azul Impriartex */}
+        <div className="bg-[#0056b3] p-6 rounded-2xl shadow-xl text-white transform hover:scale-105 transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-white/80 text-xs font-bold uppercase tracking-widest">Total Servicios</p>
+              <h3 className="text-4xl font-black mt-1">{stats.total}</h3>
+            </div>
+            <Ticket size={28} className="text-[#facc15]" />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Hasta</label>
-            <input 
-              type="date" 
-              className="input-enterprise" 
-              onChange={(e) => setDateTo(e.target.value)}
-            />
+        </div>
+
+        {/* Abiertos - Rojo Alerta */}
+        <div className="bg-white p-6 rounded-2xl shadow-md border-b-4 border-red-500 transform hover:scale-105 transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Pendientes</p>
+              <h3 className="text-4xl font-black mt-1 text-slate-900">{stats.open}</h3>
+            </div>
+            <AlertCircle size={28} className="text-red-500" />
           </div>
-          <button 
-            onClick={fetchDashboardData}
-            className="btn-primary-3d flex items-center justify-center gap-2"
-          >
-            <Filter size={18} /> Actualizar Datos
-          </button>
+        </div>
+
+        {/* En Proceso - Amarillo Impriartex */}
+        <div className="bg-[#facc15] p-6 rounded-2xl shadow-xl text-[#0056b3] transform hover:scale-105 transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-[#0056b3]/80 text-xs font-bold uppercase tracking-widest">En Atención</p>
+              <h3 className="text-4xl font-black mt-1">{stats.process}</h3>
+            </div>
+            <Clock size={28} />
+          </div>
+        </div>
+
+        {/* Finalizados - Verde Éxito */}
+        <div className="bg-white p-6 rounded-2xl shadow-md border-b-4 border-emerald-500 transform hover:scale-105 transition-all">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Completados</p>
+              <h3 className="text-4xl font-black mt-1 text-slate-900">{stats.completed}</h3>
+            </div>
+            <CheckCircle2 size={28} className="text-emerald-500" />
+          </div>
         </div>
       </div>
 
-      {/* KPI Cards Estilo Lovable 3D */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((kpi, idx) => (
-          <div key={idx} className="kpi-card flex flex-col items-center justify-center text-center p-8">
-            <div className={`w-14 h-14 rounded-2xl ${kpi.bg} flex items-center justify-center mb-4`}>
-              <kpi.icon className={`w-8 h-8 ${kpi.color}`} />
+      {/* SECCIÓN DE ACCESO RÁPIDO */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+          <h4 className="font-black text-[#0056b3] mb-4 uppercase tracking-tight">Resumen Operativo</h4>
+          <p className="text-slate-600 text-sm leading-relaxed">
+            Bienvenido al sistema de gestión de **Impriartex**. Desde aquí puedes monitorear en tiempo real 
+            el estado de los mantenimientos y reparaciones asignadas a tus técnicos.
+          </p>
+          <div className="mt-6 flex gap-3">
+            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-[#0056b3]" 
+                style={{ width: `${(stats.completed / (stats.total || 1)) * 100}%` }}
+              ></div>
             </div>
-            <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              {kpi.label}
-            </label>
-            <div className={`text-4xl font-black mt-2 ${kpi.color}`}>
-              {loading ? '...' : kpi.value}
-            </div>
+            <span className="text-[10px] font-bold text-[#0056b3]">EFICIENCIA</span>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Aquí puedes añadir gráficas de Chart.js más adelante */}
-      <div className="mt-8 grid grid-cols-1 gap-6">
-        <div className="card-3d p-6 min-h-[300px] flex items-center justify-center border-dashed border-2">
-           <p className="text-muted-foreground italic">Espacio para gráficas de rendimiento mensual...</p>
+        <div className="bg-[#0056b3] p-8 rounded-3xl shadow-lg text-white relative overflow-hidden">
+          <div className="relative z-10">
+            <h4 className="font-black mb-2 uppercase tracking-tight text-[#facc15]">Atención Inmediata</h4>
+            <p className="text-white/80 text-sm">
+              Tienes {stats.open} tickets que requieren asignación o diagnóstico urgente.
+            </p>
+          </div>
+          <Building2 size={120} className="absolute -right-8 -bottom-8 text-white/5" />
         </div>
       </div>
     </MainLayout>
