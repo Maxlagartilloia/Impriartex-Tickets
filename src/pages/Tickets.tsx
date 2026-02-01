@@ -83,26 +83,24 @@ export default function TicketsPage() {
     }
   };
 
-  // FUNCIÓN CORREGIDA: Usa el motor nativo para evitar bloqueos de seguridad CSP
   const exportPDF = (ticket: any) => {
-    toast({ title: "Preparando documento", description: "Usa la opción 'Guardar como PDF' en la ventana de impresión." });
-    
-    // Ocultamos todo excepto el contenido del ticket para imprimir limpio
     const printContent = document.getElementById(`pdf-content-${ticket.id}`);
     if (!printContent) return;
 
-    // Guardamos el estado original
+    toast({ title: "Preparando impresión", description: "Selecciona 'Guardar como PDF' en la ventana que aparecerá." });
+
+    // Guardar el contenido original para restaurarlo luego
     const originalContent = document.body.innerHTML;
-    
-    // Cambiamos el cuerpo por el ticket, imprimimos y restauramos
+
+    // Cambiar el body por solo el ticket, imprimir y recargar
     document.body.innerHTML = printContent.innerHTML;
     window.print();
-    window.location.reload(); // Recargamos para restaurar la app
+    window.location.reload(); 
   };
 
   return (
     <MainLayout title="Centro de Gestión de Servicios">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 no-print">
         <div className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-red-500">
           <label className="text-slate-400 font-black text-[10px] uppercase tracking-widest block mb-1">Pendientes</label>
           <div className="text-3xl font-black text-slate-800">{tickets.filter(t => t.status === 'open').length}</div>
@@ -117,7 +115,7 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm no-print">
         <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
           <h3 className="font-black flex items-center gap-2 text-lg text-[#0056b3] uppercase tracking-tight">
             <TicketIcon size={20} /> Tickets de Servicio
@@ -134,14 +132,14 @@ export default function TicketsPage() {
                 <th className="p-4 text-center">Acción</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 font-bold">
               {loading ? (
                 <tr><td colSpan={4} className="text-center py-20"><Loader2 className="animate-spin mx-auto text-[#0056b3]" size={32} /></td></tr>
               ) : tickets.length === 0 ? (
-                <tr><td colSpan={4} className="text-center py-20 text-slate-400 font-bold uppercase text-xs">No hay tickets registrados</td></tr>
+                <tr><td colSpan={4} className="text-center py-20 text-slate-400 uppercase text-xs">No hay tickets registrados</td></tr>
               ) : (
                 tickets.map(ticket => (
-                  <tr key={ticket.id} className="hover:bg-slate-50 transition-colors text-xs">
+                  <tr key={ticket.id} className="hover:bg-slate-50 transition-colors text-xs text-slate-700">
                     <td className="p-4">
                       <div className="font-black text-slate-700">{new Date(ticket.created_at).toLocaleDateString()}</div>
                       <div className="font-bold text-[#0056b3] uppercase">{ticket.institution?.name}</div>
@@ -174,7 +172,7 @@ export default function TicketsPage() {
       </div>
 
       {showAttendModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm no-print">
           <div className="bg-white max-w-2xl w-full p-8 rounded-[2rem] shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-black text-[#0056b3] uppercase italic flex items-center gap-2">
@@ -187,16 +185,16 @@ export default function TicketsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-50 p-4 rounded-2xl border">
                   <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Hora Llegada</label>
-                  <input type="time" required className="bg-transparent font-black text-[#0056b3] w-full" onChange={e => setForm({...form, arrival_time: e.target.value})} />
+                  <input type="time" required className="bg-transparent font-black text-[#0056b3] w-full outline-none" onChange={e => setForm({...form, arrival_time: e.target.value})} />
                 </div>
                 <div className="bg-slate-50 p-4 rounded-2xl border">
                   <label className="text-[10px] font-black text-slate-400 uppercase block mb-2">Hora Salida</label>
-                  <input type="time" required className="bg-transparent font-black text-[#0056b3] w-full" onChange={e => setForm({...form, departure_time: e.target.value})} />
+                  <input type="time" required className="bg-transparent font-black text-[#0056b3] w-full outline-none" onChange={e => setForm({...form, departure_time: e.target.value})} />
                 </div>
               </div>
 
-              <textarea placeholder="Diagnóstico..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24" required onChange={e => setForm({...form, diagnosis: e.target.value})} />
-              <textarea placeholder="Solución..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24" required onChange={e => setForm({...form, solution: e.target.value})} />
+              <textarea placeholder="Diagnóstico..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24 outline-none border-none" required onChange={e => setForm({...form, diagnosis: e.target.value})} />
+              <textarea placeholder="Solución..." className="w-full p-4 bg-slate-50 rounded-2xl font-bold text-xs h-24 outline-none border-none" required onChange={e => setForm({...form, solution: e.target.value})} />
 
               <div className="p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
                 <p className="text-[10px] font-black text-[#0056b3] uppercase mb-4 flex items-center gap-2"><ClipboardList size={14}/> Insumos</p>
@@ -204,15 +202,15 @@ export default function TicketsPage() {
                   <input type="checkbox" id="toner_rep" className="w-5 h-5 accent-[#0056b3]" onChange={e => setForm({...form, toner_status: e.target.checked ? 'Cambiado' : 'No cambiado'})} />
                   <label htmlFor="toner_rep" className="text-xs font-black uppercase">¿Cambio de Tóner?</label>
                 </div>
-                <input type="text" placeholder="Repuestos (Ej: Rodillo, Pickup...)" className="w-full p-4 bg-white border rounded-xl font-bold text-xs" onChange={e => setForm({...form, spare_parts: e.target.value})} />
+                <input type="text" placeholder="Repuestos (Ej: Rodillo, Pickup...)" className="w-full p-4 bg-white border rounded-xl font-bold text-xs outline-none" onChange={e => setForm({...form, spare_parts: e.target.value})} />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <input type="number" placeholder="Contador B/N" className="p-4 bg-slate-50 rounded-2xl font-black text-[#0056b3]" required onChange={e => setForm({...form, cntBW: parseInt(e.target.value)})} />
-                <input type="number" placeholder="Contador Color" className="p-4 bg-slate-50 rounded-2xl font-black text-[#0056b3]" required onChange={e => setForm({...form, cntColor: parseInt(e.target.value)})} />
+                <input type="number" placeholder="Contador B/N" className="p-4 bg-slate-50 rounded-2xl font-black text-[#0056b3] outline-none" required onChange={e => setForm({...form, cntBW: parseInt(e.target.value)})} />
+                <input type="number" placeholder="Contador Color" className="p-4 bg-slate-50 rounded-2xl font-black text-[#0056b3] outline-none" required onChange={e => setForm({...form, cntColor: parseInt(e.target.value)})} />
               </div>
 
-              <button type="submit" className="w-full bg-[#0056b3] text-white font-black py-5 rounded-2xl uppercase text-xs flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30">
+              <button type="submit" className="w-full bg-[#0056b3] text-white font-black py-5 rounded-2xl uppercase text-xs flex items-center justify-center gap-2 shadow-xl shadow-blue-500/30 active:scale-95 transition-all">
                 <Save size={18} /> GUARDAR REPORTE FINAL
               </button>
             </form>
@@ -220,10 +218,10 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* CONTENIDO PARA IMPRESIÓN (OCULTO EN WEB) */}
+      {/* CONTENIDO PARA IMPRESIÓN */}
       <div className="hidden">
         {tickets.map(t => (
-          <div key={`pdf-${t.id}`} id={`pdf-content-${t.id}`} className="p-10 bg-white font-serif text-slate-900">
+          <div key={`pdf-${t.id}`} id={`pdf-content-${t.id}`} className="p-10 bg-white font-serif text-slate-900" style={{ width: '210mm' }}>
               <div className="flex justify-between items-start border-b-4 border-[#0056b3] pb-6 mb-8">
                 <div><h1 className="text-3xl font-black text-[#0056b3]">IMPRIARTEX</h1><p className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Soporte Técnico Especializado</p></div>
                 <div className="text-right"><p className="font-black text-xl italic uppercase">Reporte Técnico</p><p className="text-[10px] font-bold">Ticket: #{t.ticket_number}</p></div>
@@ -233,14 +231,21 @@ export default function TicketsPage() {
                 <div className="space-y-1"><p>Equipo: {t.equipment?.model}</p><p>S/N: {t.equipment?.serial}</p></div>
               </div>
               <div className="space-y-6">
-                <div className="p-4 bg-slate-50 rounded-xl border"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2">Diagnóstico Detallado</h4><p className="text-[12px]">{t.diagnosis}</p></div>
-                <div className="p-4 bg-slate-50 rounded-xl border"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2">Solución Aplicada</h4><p className="text-[12px]">{t.solution}</p></div>
-                <div className="p-4 border border-blue-100 rounded-xl"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2">Insumos y Repuestos</h4><p className="text-[11px]">Tóner: {t.toner_status}</p><p className="text-[11px]">Piezas: {t.spare_parts || 'Ninguno'}</p></div>
+                <div className="p-4 bg-slate-50 rounded-xl border"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Diagnóstico</h4><p className="text-[12px]">{t.diagnosis}</p></div>
+                <div className="p-4 bg-slate-50 rounded-xl border"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Solución</h4><p className="text-[12px]">{t.solution}</p></div>
+                <div className="p-4 border border-blue-100 rounded-xl"><h4 className="text-[10px] font-black text-[#0056b3] uppercase mb-2 text-blue-600">Insumos</h4><p className="text-[11px]">Tóner: {t.toner_status}</p><p className="text-[11px]">Piezas: {t.spare_parts || 'Ninguno'}</p></div>
               </div>
               <div className="flex justify-between mt-32"><div className="text-center w-64 border-t-2 border-slate-900 pt-2 text-[10px] font-black uppercase">Firma Técnico</div><div className="text-center w-64 border-t-2 border-slate-900 pt-2 text-[10px] font-black uppercase">Firma Cliente</div></div>
           </div>
         ))}
       </div>
+
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          body { background: white !important; }
+        }
+      `}</style>
     </MainLayout>
   );
 }
