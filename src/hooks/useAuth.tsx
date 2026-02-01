@@ -8,47 +8,67 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Función interna para obtener el rol sin repetir código
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      return data?.role || null;
+    } catch (err) {
+      console.error("Error al obtener rol del perfil:", err);
+      return null;
+    }
+  };
+
   useEffect(() => {
-    // 1. Función para verificar la sesión inicial de golpe
+    // 1. Inicialización de choque
     const initializeAuth = async () => {
+      setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        
         if (session?.user) {
           setUser(session.user);
-          const { data } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          setRole(data?.role || null);
+          const userRole = await fetchUserRole(session.user.id);
+          setRole(userRole);
         }
       } catch (error) {
-        console.error("Error inicializando Auth:", error);
+        console.error("Fallo crítico en inicialización Auth:", error);
       } finally {
-        // ¡ESTO QUITA LA BOLITA SI O SI!
+        // Garantizamos que el estado de carga termine pase lo que pase
         setLoading(false);
       }
     };
 
     initializeAuth();
 
-    // 2. Escucha cambios futuros (Login/Logout)
+    // 2. Escucha activa de eventos (Login, Logout, Token Refreshed)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
+      console.log(`Evento Auth detectado: ${event}`);
+      
       if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        setRole(data?.role || null);
+        setUser(session.user);
+        const userRole = await fetchUserRole(session.user.id);
+        setRole(userRole);
       } else {
+        setUser(null);
         setRole(null);
       }
-      setLoading(false);
+      
+      // Si el evento es un cierre de sesión, forzamos el fin del loading
+      if (event === 'SIGNED_OUT') {
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -58,4 +78,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+  }
+  return context;
+};
