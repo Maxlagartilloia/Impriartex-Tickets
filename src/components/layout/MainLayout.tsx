@@ -28,31 +28,42 @@ export function MainLayout({ children, title }: { children: React.ReactNode; tit
             <span className="text-[#facc15] text-[10px] tracking-[0.3em]">SOPORTE TÉCNICO</span>
           </h2>
           
-          <nav className="space-y-2">
-            {/* Opciones Generales */}
-            <button onClick={() => navigate('/dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/dashboard') ? 'bg-white text-[#0056b3] shadow-lg' : 'hover:bg-white/10'}`}>
-              <LayoutDashboard size={18} /> DASHBOARD
-            </button>
-            <button onClick={() => navigate('/tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/tickets') ? 'bg-white text-[#0056b3] shadow-lg' : 'hover:bg-white/10'}`}>
-              <Ticket size={18} /> GESTIÓN DE TICKETS
-            </button>
+         <nav className="space-y-2">
+  {/* Pestañas básicas para todos los niveles */}
+  <button onClick={() => navigate('/dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs ${isActive('/dashboard') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+    <LayoutDashboard size={18} /> DASHBOARD
+  </button>
+  
+  <button onClick={() => navigate('/tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs ${isActive('/tickets') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+    <Ticket size={18} /> SOPORTE / TICKETS
+  </button>
 
-            {/* Opciones exclusivas de SUPERVISOR (Criss) */}
-            {role === 'supervisor' && (
-              <div className="pt-4 mt-4 border-t border-white/10 space-y-2">
-                <p className="px-4 text-[9px] font-black text-[#facc15] uppercase tracking-[0.2em] mb-2 opacity-70">Administración</p>
-                <button onClick={() => navigate('/equipment')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/equipment') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
-                  <Printer size={18} /> INVENTARIO GLOBAL
-                </button>
-                <button onClick={() => navigate('/institutions')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/institutions') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
-                  <Building2 size={18} /> CLIENTES / ENTIDADES
-                </button>
-                <button onClick={() => navigate('/technicians')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/technicians') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
-                  <Wrench size={18} /> EQUIPO TÉCNICO
-                </button>
-              </div>
-            )}
-          </nav>
+  <button onClick={() => navigate('/equipment')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs ${isActive('/equipment') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+    <Printer size={18} /> INVENTARIO
+  </button>
+
+  {/* Pestañas exclusivas de SUPERVISOR (Criss) */}
+  {role === 'supervisor' && (
+    <div className="pt-4 mt-4 border-t border-white/10 space-y-2">
+      <p className="px-4 text-[9px] font-black text-[#facc15] uppercase tracking-widest mb-2">Administración Pro</p>
+      
+      {/* Gestión de Clientes (Aquí creas los usuarios de las empresas) */}
+      <button onClick={() => navigate('/institutions')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs ${isActive('/institutions') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+        <Building2 size={18} /> GESTIÓN DE CLIENTES
+      </button>
+      
+      {/* Gestión de Técnicos (Aquí creas y asignas a tu equipo) */}
+      <button onClick={() => navigate('/technicians')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs ${isActive('/technicians') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+        <Wrench size={18} /> GESTIÓN DE TÉCNICOS
+      </button>
+
+      {/* Reportes de Supervisor (Filtros globales) */}
+      <button onClick={() => navigate('/reports')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs ${isActive('/reports') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+        <FileText size={18} /> REPORTES GLOBALES
+      </button>
+    </div>
+  )}
+</nav>
         </div>
       </aside>
 
