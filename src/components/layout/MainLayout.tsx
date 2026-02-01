@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   LayoutDashboard, Ticket, Printer, 
-  Building2, Wrench, LogOut, Menu, X 
+  Building2, Wrench, LogOut, Menu, X, Calendar, Settings
 } from 'lucide-react';
 
 export function MainLayout({ children, title }: { children: React.ReactNode; title: string }) {
@@ -12,101 +12,87 @@ export function MainLayout({ children, title }: { children: React.ReactNode; tit
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { label: 'Soporte', icon: Ticket, path: '/tickets' },
-    { label: 'Inventario', icon: Printer, path: '/equipment' }, // Corregido: Agregado icono Printer
-  ];
-
-  const adminItems = [
-    { label: 'Clientes', icon: Building2, path: '/institutions' },
-    { label: 'Técnicos', icon: Wrench, path: '/technicians' },
-  ];
+  // Estado para el filtro global de fechas que pediste
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex text-slate-900 font-sans">
-      {/* Sidebar con Azul Impriartex */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0056b3] text-white transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full shadow-2xl'}`}>
+      {/* SIDEBAR: Ubicado a la izquierda */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0056b3] text-white transition-transform lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6">
-          <h2 className="text-xl font-black tracking-tighter uppercase mb-8 flex flex-col">
+          <h2 className="text-xl font-black mb-8 flex flex-col uppercase tracking-tighter">
             IMPRIARTEX 
-            <span className="text-[#facc15] text-sm tracking-widest">SOPORTE TÉCNICO</span>
+            <span className="text-[#facc15] text-[10px] tracking-[0.3em]">SOPORTE TÉCNICO</span>
           </h2>
           
           <nav className="space-y-2">
-            {menuItems.map((item) => (
-              <button
-                key={item.path}
-                onClick={() => { navigate(item.path); setSidebarOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${
-                  isActive(item.path) 
-                  ? 'bg-white text-[#0056b3] shadow-lg' 
-                  : 'hover:bg-white/10 text-white/80 hover:text-white'
-                }`}
-              >
-                <item.icon size={20} /> {item.label}
-              </button>
-            ))}
+            {/* Opciones Generales */}
+            <button onClick={() => navigate('/dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/dashboard') ? 'bg-white text-[#0056b3] shadow-lg' : 'hover:bg-white/10'}`}>
+              <LayoutDashboard size={18} /> DASHBOARD
+            </button>
+            <button onClick={() => navigate('/tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/tickets') ? 'bg-white text-[#0056b3] shadow-lg' : 'hover:bg-white/10'}`}>
+              <Ticket size={18} /> GESTIÓN DE TICKETS
+            </button>
 
+            {/* Opciones exclusivas de SUPERVISOR (Criss) */}
             {role === 'supervisor' && (
               <div className="pt-4 mt-4 border-t border-white/10 space-y-2">
-                <p className="px-4 text-[10px] font-black text-[#facc15] uppercase tracking-widest mb-2">Panel Administrativo</p>
-                {adminItems.map((item) => (
-                  <button
-                    key={item.path}
-                    onClick={() => { navigate(item.path); setSidebarOpen(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all ${
-                      isActive(item.path) 
-                      ? 'bg-white text-[#0056b3] shadow-lg' 
-                      : 'hover:bg-white/10 text-white/80 hover:text-white'
-                    }`}
-                  >
-                    <item.icon size={20} /> {item.label}
-                  </button>
-                ))}
+                <p className="px-4 text-[9px] font-black text-[#facc15] uppercase tracking-[0.2em] mb-2 opacity-70">Administración</p>
+                <button onClick={() => navigate('/equipment')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/equipment') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+                  <Printer size={18} /> INVENTARIO GLOBAL
+                </button>
+                <button onClick={() => navigate('/institutions')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/institutions') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+                  <Building2 size={18} /> CLIENTES / ENTIDADES
+                </button>
+                <button onClick={() => navigate('/technicians')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs transition-all ${isActive('/technicians') ? 'bg-white text-[#0056b3]' : 'hover:bg-white/10'}`}>
+                  <Wrench size={18} /> EQUIPO TÉCNICO
+                </button>
               </div>
             )}
           </nav>
         </div>
-        
-        {/* Footer del Sidebar con info del usuario */}
-        <div className="absolute bottom-0 w-full p-4 bg-black/10 text-[10px] text-white/50 text-center uppercase font-bold">
-          v1.0.0 - CL Tech Solutions
-        </div>
       </aside>
 
-      {/* Contenido Principal con fondo blanco limpio */}
+      {/* ÁREA PRINCIPAL */}
       <main className="flex-1 lg:ml-64 min-h-screen flex flex-col">
-        <header className="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 sticky top-0 z-40">
+        {/* HEADER SUPERIOR CON FILTROS DE FECHA */}
+        <header className="h-20 border-b border-slate-200 bg-white sticky top-0 z-40 px-6 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-4">
             <button className="lg:hidden text-[#0056b3]" onClick={() => setSidebarOpen(!isSidebarOpen)}>
-              {isSidebarOpen ? <X size={28} /> : <Menu size={28} />}
+              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-            <h1 className="font-black text-[#0056b3] uppercase tracking-tight">{title}</h1>
+            <h1 className="font-black text-[#0056b3] uppercase text-sm tracking-tight italic">{title}</h1>
           </div>
-          <button 
-            onClick={() => navigate('/login')} 
-            className="flex items-center gap-2 text-red-600 font-bold hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
-          >
-            <span className="hidden sm:inline text-xs">SALIR</span>
-            <LogOut size={20} />
-          </button>
+
+          <div className="flex items-center gap-4">
+            {/* SELECTORES DE FECHA PARA REPORTES */}
+            <div className="hidden md:flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black text-slate-400 uppercase">Desde:</span>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none text-[#0056b3]" />
+              </div>
+              <div className="w-px h-4 bg-slate-200"></div>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black text-slate-400 uppercase">Hasta:</span>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none text-[#0056b3]" />
+              </div>
+              <Calendar size={14} className="text-[#0056b3] ml-1" />
+            </div>
+
+            <button onClick={() => navigate('/login')} className="flex items-center gap-2 bg-red-50 text-red-600 font-black text-[10px] px-4 py-2.5 rounded-xl hover:bg-red-600 hover:text-white transition-all border border-red-100 uppercase tracking-widest">
+              Salir <LogOut size={16} />
+            </button>
+          </div>
         </header>
 
-        <div className="p-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        {/* CONTENIDO DINÁMICO */}
+        <div className="p-8">
           {children}
         </div>
       </main>
-      
-      {/* Overlay para móviles */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 }
